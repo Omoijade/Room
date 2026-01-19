@@ -1,0 +1,1542 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>The Room</title>
+  <meta name="description" content="A facilitation surface for decisions that stick." />
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>◐</text></svg>" />
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display&display=swap" rel="stylesheet">
+  <script src="https://unpkg.com/react@18/umd/react.production.min.js" crossorigin></script>
+  <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js" crossorigin></script>
+  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+  <style>
+    :root {
+      --bg: #F5F5F7; --bg-card: #FFFFFF; --bg-secondary: #FAFAFA; --bg-dark: #1D1D1F;
+      --accent: #1D1D1F; --accent-soft: #E8E8ED;
+      --text: #1D1D1F; --text-secondary: #6E6E73; --text-muted: #AEAEB2; --text-on-dark: #F5F5F7;
+      --border: #D2D2D7; --border-light: #E8E8ED;
+      --green: #34C759; --green-soft: #E8FAE8; --green-text: #248A3D;
+      --blue: #007AFF; --blue-soft: #E5F2FF; --blue-text: #0055D4;
+      --purple: #AF52DE; --purple-soft: #F5E6FA; --purple-text: #8944AB;
+      --orange: #FF9500; --orange-soft: #FFF4E5; --orange-text: #C45D00;
+      --yellow: #FFCC00; --yellow-soft: #FFF9E5; --yellow-text: #996600;
+      --red: #FF3B30; --red-soft: #FFE5E5; --red-text: #D70015;
+      --radius: 12px; --radius-lg: 16px; --radius-xl: 20px;
+      --shadow-sm: 0 1px 2px rgba(0,0,0,0.04);
+      --shadow: 0 2px 8px rgba(0,0,0,0.04), 0 1px 2px rgba(0,0,0,0.06);
+      --shadow-lg: 0 8px 24px rgba(0,0,0,0.08), 0 2px 8px rgba(0,0,0,0.04);
+      --touch-target: 44px;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    html { font-size: 18px; scroll-behavior: smooth; overflow-x: hidden; }
+    body { 
+      font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "SF Pro Display", "Helvetica Neue", Helvetica, Arial, sans-serif;
+      background: var(--bg); color: var(--text); min-height: 100vh;
+      -webkit-font-smoothing: antialiased; line-height: 1.5; letter-spacing: -0.022em;
+      -webkit-tap-highlight-color: transparent;
+      overflow-x: hidden;
+      position: relative;
+      width: 100%;
+    }
+    .font-serif { font-family: "DM Serif Display", "New York", Georgia, serif; letter-spacing: -0.01em; }
+    @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+    @keyframes slideUp { from { opacity: 0; transform: translateY(16px); } to { opacity: 1; transform: translateY(0); } }
+    @keyframes scaleIn { from { opacity: 0; transform: scale(0.97); } to { opacity: 1; transform: scale(1); } }
+    @keyframes float { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-6px); } }
+    @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.5; } }
+    @keyframes saveFlash { 0% { opacity: 0; transform: scale(0.9); } 50% { opacity: 1; transform: scale(1); } 100% { opacity: 0; transform: scale(0.9); } }
+    @keyframes slideDown { from { opacity: 0; transform: translateY(-10px); } to { opacity: 1; transform: translateY(0); } }
+    .animate-in { animation: fadeIn 0.5s ease, slideUp 0.5s ease; animation-fill-mode: both; }
+    .animate-fade { animation: fadeIn 0.25s ease; }
+    .animate-scale { animation: scaleIn 0.2s ease; }
+    .animate-float { animation: float 4s ease-in-out infinite; }
+    .animate-pulse { animation: pulse 1.5s ease infinite; }
+    .animate-save { animation: saveFlash 1.5s ease; }
+    .animate-dropdown { animation: slideDown 0.2s ease; }
+    .delay-1 { animation-delay: 0.1s; } .delay-2 { animation-delay: 0.2s; } .delay-3 { animation-delay: 0.3s; }
+    *:focus-visible { outline: 3px solid var(--blue); outline-offset: 2px; }
+    ::-webkit-scrollbar { width: 8px; height: 8px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 4px; }
+
+    @media print {
+      .no-print { display: none !important; }
+      body { background: white; font-size: 12pt; }
+      .card { box-shadow: none; border: 1px solid #ddd; break-inside: avoid; }
+      .print-break { page-break-before: always; }
+    }
+
+    @media (max-width: 768px) {
+      html { font-size: 16px; }
+      body { overflow-x: hidden; }
+      .desktop-only { display: none !important; }
+      .mobile-stack { flex-direction: column !important; }
+      .mobile-full { width: 100% !important; min-width: 0 !important; }
+      .mobile-grid-1 { grid-template-columns: 1fr !important; }
+      .mobile-grid-2 { grid-template-columns: repeat(2, 1fr) !important; }
+      .room-layout { display: flex !important; flex-direction: column !important; }
+      .room-sidebar { width: 100% !important; margin-top: 16px; }
+      .room-main { order: 2; }
+      .mobile-timer-section { order: 1; margin-bottom: 16px; }
+      .mobile-show { display: flex !important; }
+      .mobile-p-sm { padding: 16px !important; }
+      .topic-row { padding: 14px 16px; }
+      .sidebar-topic-text { font-size: 0.9375rem; }
+      .card { max-width: 100%; overflow: hidden; }
+      main { max-width: 100%; overflow-x: hidden; }
+    }
+    @media (min-width: 769px) {
+      .mobile-only { display: none !important; }
+    }
+
+    .btn {
+      display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+      font-family: inherit; font-weight: 600; border-radius: var(--radius); cursor: pointer;
+      border: none; transition: all 0.2s ease; letter-spacing: -0.01em;
+      min-height: var(--touch-target);
+    }
+    .btn:active { transform: scale(0.98); }
+    .btn:disabled { opacity: 0.4; cursor: default; transform: none; }
+    .btn-primary { background: var(--accent); color: white; padding: 14px 28px; font-size: 1rem; }
+    .btn-primary:hover:enabled { background: #000; transform: translateY(-1px); box-shadow: var(--shadow-lg); }
+    .btn-secondary { background: var(--bg-card); border: 1px solid var(--border); color: var(--text); padding: 12px 20px; font-size: 1rem; }
+    .btn-secondary:hover:enabled { background: var(--bg-secondary); border-color: var(--text-muted); }
+    .btn-ghost { background: transparent; color: var(--text-secondary); padding: 10px 16px; font-size: 0.9375rem; }
+    .btn-ghost:hover { background: var(--accent-soft); color: var(--text); }
+    .btn-small { padding: 10px 16px; font-size: 0.875rem; border-radius: 8px; min-height: 40px; }
+    .btn-icon { padding: 10px; border-radius: 8px; min-width: var(--touch-target); }
+    .btn-large { padding: 18px 36px; font-size: 1.0625rem; border-radius: var(--radius-lg); }
+
+    .input {
+      width: 100%; padding: 14px 16px; border: 1px solid var(--border); border-radius: var(--radius);
+      font-family: inherit; font-size: 1rem; background: var(--bg-card); color: var(--text); transition: all 0.15s;
+      min-height: var(--touch-target);
+    }
+    .input::placeholder { color: var(--text-muted); }
+    .input:focus { border-color: var(--blue); outline: none; box-shadow: 0 0 0 3px var(--blue-soft); }
+    .input-small { padding: 12px 14px; font-size: 0.9375rem; }
+
+    .textarea-auto {
+      width: 100%; min-height: 60px; padding: 16px; border: none; border-radius: var(--radius);
+      font-family: inherit; font-size: inherit; line-height: 1.5; background: transparent;
+      color: var(--text); resize: none; overflow: hidden;
+    }
+    .textarea-auto:focus { outline: none; }
+    .textarea-auto::placeholder { color: var(--text-muted); }
+
+    .card { background: var(--bg-card); border-radius: var(--radius-lg); box-shadow: var(--shadow); overflow: hidden; }
+    .progress-bar { height: 6px; background: var(--border-light); border-radius: 3px; overflow: hidden; }
+    .progress-fill { height: 100%; background: var(--green); border-radius: 3px; transition: width 0.3s ease; }
+
+    .intention-banner {
+      background: linear-gradient(135deg, var(--blue-soft) 0%, var(--purple-soft) 100%);
+      border: 1px solid var(--border-light); border-radius: var(--radius);
+      padding: 14px 18px; display: flex; align-items: center; gap: 12px;
+    }
+
+    .lang-toggle { display: flex; align-items: center; gap: 4px; padding: 4px; background: var(--bg-secondary); border-radius: 8px; font-size: 0.875rem; }
+    .lang-toggle button { padding: 8px 12px; border: none; background: transparent; cursor: pointer; border-radius: 6px; font-weight: 500; color: var(--text-muted); transition: all 0.15s; font-family: inherit; min-height: 36px; }
+    .lang-toggle button.active { background: var(--bg-card); color: var(--text); box-shadow: var(--shadow-sm); }
+
+    .topic-row { 
+      display: flex; 
+      align-items: flex-start; 
+      gap: 12px; 
+      padding: 16px; 
+      background: var(--bg-secondary); 
+      border-radius: 10px; 
+      transition: all 0.15s; 
+      min-height: var(--touch-target);
+      width: 100%;
+      overflow: hidden;
+    }
+    .topic-row:hover { background: var(--accent-soft); }
+    .topic-row .reorder-btns { opacity: 0; transition: opacity 0.15s; margin-top: 2px; flex-shrink: 0; }
+    .topic-row:hover .reorder-btns { opacity: 1; }
+    .topic-row textarea { 
+      color: var(--text);
+    }
+    .topic-row textarea::placeholder { color: var(--text-muted); }
+
+    .aob-box { background: var(--purple-soft); border: 1px solid var(--purple); border-radius: var(--radius); padding: 18px; }
+
+    .checkbox { width: 26px; height: 26px; border: 2px solid var(--border); border-radius: 6px; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: all 0.15s; flex-shrink: 0; }
+    .checkbox.checked { background: var(--green); border-color: var(--green); color: white; }
+    .checkbox:hover { border-color: var(--green); }
+
+    .session-card { padding: 18px; border: 1px solid var(--border-light); border-radius: var(--radius); transition: all 0.2s; cursor: pointer; background: var(--bg-card); min-height: var(--touch-target); }
+    .session-card:hover { border-color: var(--accent); box-shadow: var(--shadow); transform: translateY(-2px); }
+
+    .template-card { padding: 16px; border: 2px solid var(--border-light); border-radius: var(--radius-lg); transition: all 0.2s; cursor: pointer; text-align: left; background: var(--bg-card); }
+    .template-card:hover { border-color: var(--accent); background: var(--bg-secondary); }
+    .template-card.selected { border-color: var(--accent); background: var(--accent-soft); }
+
+    .tip-box { padding: 16px 18px; background: var(--blue-soft); border-radius: var(--radius); font-size: 0.9375rem; color: var(--blue-text); line-height: 1.5; }
+
+    .save-indicator { position: fixed; bottom: 20px; right: 20px; padding: 12px 18px; background: var(--green); color: white; border-radius: var(--radius); font-size: 0.9375rem; font-weight: 500; display: flex; align-items: center; gap: 8px; z-index: 100; }
+
+    .mobile-nav { position: relative; }
+    .mobile-nav-dropdown { position: absolute; top: 100%; left: 0; right: 0; background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--radius); box-shadow: var(--shadow-lg); z-index: 50; margin-top: 4px; overflow: hidden; min-width: 200px; }
+    .mobile-nav-item { display: flex; align-items: center; justify-content: space-between; padding: 16px 18px; border-bottom: 1px solid var(--border-light); cursor: pointer; font-weight: 500; min-height: var(--touch-target); font-size: 1rem; }
+    .mobile-nav-item:last-child { border-bottom: none; }
+    .mobile-nav-item:hover { background: var(--bg-secondary); }
+    .mobile-nav-item.active { background: var(--accent-soft); color: var(--accent); }
+    .mobile-nav-item.disabled { opacity: 0.4; cursor: default; }
+
+    .timer-display { font-family: ui-monospace, monospace; font-variant-numeric: tabular-nums; }
+    .timer-overtime { color: var(--red-text); }
+
+    .template-preview { margin-top: 12px; padding-top: 12px; border-top: 1px solid var(--border-light); }
+    .template-topic { display: flex; align-items: center; gap: 10px; padding: 8px 0; font-size: 0.9375rem; color: var(--text-secondary); }
+    .template-topic-num { width: 20px; height: 20px; border-radius: 50%; background: var(--accent); color: white; display: flex; align-items: center; justify-content: center; font-size: 0.6875rem; font-weight: 600; flex-shrink: 0; }
+    
+    /* Sidebar topic items - ensure text wraps */
+    .sidebar-topic-text { 
+      font-size: 0.875rem; 
+      line-height: 1.5;
+      word-break: break-word;
+      overflow-wrap: break-word;
+      hyphens: auto;
+      white-space: normal;
+      display: block;
+    }
+  </style>
+</head>
+<body>
+  <div id="root"></div>
+  <script type="text/babel">
+    const { useState, useEffect, useCallback, useRef, useLayoutEffect, createContext, useContext } = React;
+
+    // =============================================
+    // TRANSLATIONS
+    // =============================================
+    const translations = {
+      en: {
+        appName: "The Room",
+        setup: "Setup", agenda: "Agenda", session: "Session", commitments: "Commitments",
+        startSession: "Start a session", continueSession: "Continue session",
+        backToSetup: "Back to setup", buildAgenda: "Build agenda", enterTheRoom: "Enter the room",
+        previous: "Previous", nextTopic: "Next topic", finish: "Finish",
+        keepDiscussing: "Keep discussing", yesNextTopic: "Yes, next topic", yesSeeCommitments: "Yes, see commitments",
+        skipNextTime: "Skip this step next time",
+        captureCommitment: "Capture commitment", save: "Save", cancel: "Cancel",
+        copy: "Copy", copied: "Copied", print: "Print", backToHome: "Back to home",
+        newSession: "New session", goBackAndAdd: "Go back and add some", gotIt: "Got it",
+        addTopic: "Add topic", viewAll: "View all", startTimer: "Start", pauseTimer: "Pause", resetTimer: "Reset",
+        meetingTitle: "Session title", whatToLeaveWith: "What we need to leave with",
+        meetingDate: "Meeting date", time: "Start time", duration: "Duration", facilitator: "Facilitator", attendees: "Participants",
+        timeRemaining: "Time remaining", timeOver: "Over by", totalTime: "Total time",
+        progress: "Progress", goal: "Goal", topics: "topics", of: "of",
+        meetingTitlePlaceholder: "Name this session",
+        intentionPlaceholder: "The one thing that makes this worth everyone's time",
+        facilitatorPlaceholder: "Who is facilitating?",
+        attendeesPlaceholder: "Who is in the room?",
+        topicPlaceholder: "Topic that needs attention",
+        notesPlaceholder: "What is being said? What matters?",
+        commitmentWhatPlaceholder: "We will...",
+        commitmentWhoPlaceholder: "Who owns this?",
+        intentionHelp: "This stays visible throughout to keep the group oriented.",
+        whatWeAgreed: "What we agreed", ourCommitments: "Commitments",
+        discussionNotes: "Discussion notes", agreedInTheRoom: "Agreed in the room",
+        noCommitmentsYet: "Commitments will appear here", noCommitmentsCaptured: "No commitments captured yet",
+        beforeWeMove: "Before we move on",
+        everyoneClear: "Is everyone clear on what we discussed?",
+        capturedAgreed: "Have we captured what we agreed?",
+        howThisWorks: "How this works",
+        setupDesc: "Name the session and set a clear intention.",
+        agendaDesc: "List the topics that need attention.",
+        sessionDesc: "Work through each topic. Capture commitments.",
+        commitmentsDesc: "Review and share what you agreed.",
+        needToSurface: "Need to surface something?",
+        scope: "Scope", voices: "Voices", context: "Context",
+        scopeQuestion: "What are we really deciding?",
+        voicesQuestion: "Whose perspective matters here?",
+        contextQuestion: "Where does this sit in the bigger picture?",
+        scopeDesc: "Draw boundaries around the problem",
+        voicesDesc: "Consider who shapes this decision",
+        contextDesc: "See how this connects to everything else",
+        scopePrompts: ["What problem are we actually solving?", "What can we set aside for now?", "Is this essential or optional?", "What is the smallest useful next step?"],
+        voicesPrompts: ["Who is affected but absent?", "What might an outsider ask?", "What are we assuming?", "Whose concerns need more weight?"],
+        contextPrompts: ["Is this our call alone?", "What else might this affect?", "What happens if we wait?", "How does this connect to past decisions?"],
+        
+        // Landing page
+        heroTitle: "A facilitation surface for decisions that stick.",
+        heroSubtitle: "For facilitators who believe alignment happens in the room, while everyone is still present.",
+        
+        youKnowThis: "You already know this.",
+        youKnowThisDesc: "Groups talk. Heads nod. Everyone leaves. Then someone asks \"what did we decide?\" and each person has a different answer. The work drifts into hallways and follow up messages. The same topics return, meeting after meeting.",
+        
+        whatRoomDoes: "What The Room does",
+        roomPurpose: "Recording tools capture what was said. The Room holds space for what it means. One topic fills the screen. The group sees together, decides together. Commitments are made while everyone watches.",
+        
+        forFacilitators: "Built for facilitators",
+        forFacilitatorsDesc: "The Room supports your craft. It handles the structure so you can focus on the people.",
+        whatYouGet: "What you get",
+        
+        feature1Title: "One focus at a time",
+        feature1Desc: "The current topic fills the screen. Everyone sees what is being discussed, what has been noted, what has been agreed.",
+        feature2Title: "Three thinking lenses",
+        feature2Desc: "When the group is stuck, prompts help surface what might be missing: scope, voices, context.",
+        feature3Title: "Commitments made together",
+        feature3Desc: "Capture who will do what while everyone is present. Decisions become visible and owned.",
+        
+        facilitatorTips: "Facilitator guidance",
+        facilitatorTipsDesc: "Optional prompts throughout to support your practice.",
+        
+        grounded: "Grounded in research",
+        groundedDesc: "The Room draws on distributed cognition, common ground theory, boundary objects, and sensemaking research. The same foundations that inform good facilitation practice.",
+        researchCredits: "Hutchins · Clark & Brennan · Star & Griesemer · Weick · Checkland · Ulrich",
+        
+        scenarios: "Choose a session type",
+        scenarioBlank: "Blank", scenarioBlankDesc: "Start fresh with your own structure",
+        scenarioStrategy: "Strategy Session", scenarioStrategyDesc: "Move from goals to decisions to action",
+        scenarioAlignment: "Team Alignment", scenarioAlignmentDesc: "Surface perspectives and find common ground",
+        scenarioRetro: "Retrospective", scenarioRetroDesc: "Reflect on what happened and improve",
+        scenarioCritique: "Design Critique", scenarioCritiqueDesc: "Give structured feedback on work",
+        
+        recentSessions: "Recent sessions",
+        
+        readyToFacilitate: "Ready to facilitate?",
+        readyToFacilitateDesc: "Start a session, share your screen, and hold space for the decisions that matter.",
+        
+        madeFor: "Made for facilitators, coaches, and consultants who believe in the power of thinking together.",
+        dataLocal: "Your sessions stay in your browser.",
+        
+        topicsIncluded: "Topics included",
+        
+        // Tips
+        tipSetup: "A clear intention keeps the group oriented when discussion drifts. Write it as one sentence: what must we leave with?",
+        tipAgenda: "Order topics by energy. Start with something that builds momentum. Save difficult items for when the group is warm.",
+        tipRoomStart: "Read the topic aloud before anyone responds. Let silence do its work.",
+        tipPause: "This pause exists because groups often move forward before alignment is real. If anyone hesitates, stay.",
+        tipCommitment: "A commitment has an owner and an action. \"We should think about X\" is a discussion point. \"Jo will draft X by Friday\" is a commitment.",
+        
+        // App
+        exportSession: "Export", importSession: "Import",
+        addToCalendar: "Add to calendar", saved: "Saved",
+        completed: "done", pending: "to do", allCommitments: "all",
+        untitledSession: "Untitled session", untitledTopic: "Untitled topic", theGroup: "The group",
+        topic: "Topic", startOver: "Start fresh?", confirmStartOver: "Start a new session?",
+        copyAgenda: "Copy", agendaCopied: "Copied",
+        shareBeforeMeeting: "Share this with participants beforehand",
+        timeEstimate: "min", dueDate: "Due",
+        moveUp: "Move up", moveDown: "Move down",
+        aob: "Any other business", aobDesc: "Topics that came up but belong in a future session",
+        aobPlaceholder: "Topic for later...", noAob: "None yet", addToAgenda: "Add to this session",
+        showTip: "Show tip", hideTip: "Hide tip",
+        menu: "Menu",
+        
+        // Export
+        exportTitle: "Session Summary",
+        exportFacilitatedWith: "Facilitated with The Room",
+      },
+      fr: {
+        appName: "The Room",
+        setup: "Preparation", agenda: "Ordre du jour", session: "Session", commitments: "Engagements",
+        startSession: "Demarrer", continueSession: "Continuer",
+        backToSetup: "Retour", buildAgenda: "Ordre du jour", enterTheRoom: "Entrer",
+        previous: "Precedent", nextTopic: "Suivant", finish: "Terminer",
+        keepDiscussing: "Continuer la discussion", yesNextTopic: "Oui, suivant", yesSeeCommitments: "Oui, voir les engagements",
+        skipNextTime: "Passer cette etape la prochaine fois",
+        captureCommitment: "Capturer", save: "Enregistrer", cancel: "Annuler",
+        copy: "Copier", copied: "Copie", print: "Imprimer", backToHome: "Accueil",
+        newSession: "Nouvelle session", goBackAndAdd: "Retourner en ajouter", gotIt: "Compris",
+        addTopic: "Ajouter", viewAll: "Voir tout", startTimer: "Demarrer", pauseTimer: "Pause", resetTimer: "Reset",
+        meetingTitle: "Titre de la session", whatToLeaveWith: "Ce que nous devons obtenir",
+        meetingDate: "Date de la reunion", time: "Heure de debut", duration: "Duree", facilitator: "Facilitateur", attendees: "Participants",
+        timeRemaining: "Temps restant", timeOver: "Depasse de", totalTime: "Temps total",
+        progress: "Progression", goal: "Objectif", topics: "sujets", of: "sur",
+        meetingTitlePlaceholder: "Nommer cette session",
+        intentionPlaceholder: "Ce qui justifie le temps de chacun",
+        facilitatorPlaceholder: "Qui facilite?",
+        attendeesPlaceholder: "Qui est present?",
+        topicPlaceholder: "Sujet a traiter",
+        notesPlaceholder: "Qu'est ce qui se dit? Qu'est ce qui compte?",
+        commitmentWhatPlaceholder: "Nous allons...",
+        commitmentWhoPlaceholder: "Qui est responsable?",
+        intentionHelp: "Reste visible pour orienter le groupe.",
+        whatWeAgreed: "Ce que nous avons convenu", ourCommitments: "Engagements",
+        discussionNotes: "Notes de discussion", agreedInTheRoom: "Convenu ensemble",
+        noCommitmentsYet: "Les engagements apparaitront ici", noCommitmentsCaptured: "Aucun engagement capture",
+        beforeWeMove: "Avant de continuer",
+        everyoneClear: "Tout le monde est au clair sur ce que nous avons discute?",
+        capturedAgreed: "Avons nous capture ce que nous avons convenu?",
+        howThisWorks: "Comment ca marche",
+        setupDesc: "Nommer la session et definir une intention claire.",
+        agendaDesc: "Lister les sujets qui necessitent attention.",
+        sessionDesc: "Parcourir chaque sujet. Capturer les engagements.",
+        commitmentsDesc: "Revoir et partager ce que vous avez convenu.",
+        needToSurface: "Besoin de faire emerger quelque chose?",
+        scope: "Perimetre", voices: "Voix", context: "Contexte",
+        scopeQuestion: "Que decidons nous vraiment?",
+        voicesQuestion: "Quelle perspective compte ici?",
+        contextQuestion: "Ou cela se situe dans l'ensemble?",
+        scopeDesc: "Delimiter le probleme",
+        voicesDesc: "Considerer qui faconne cette decision",
+        contextDesc: "Voir comment cela se connecte au reste",
+        scopePrompts: ["Quel probleme resolvons nous vraiment?", "Que pouvons nous mettre de cote?", "Est ce essentiel ou optionnel?", "Quelle est la plus petite prochaine etape utile?"],
+        voicesPrompts: ["Qui est affecte mais absent?", "Que demanderait un externe?", "Que supposons nous?", "Quelles preoccupations meritent plus de poids?"],
+        contextPrompts: ["Est ce notre decision seule?", "Qu'est ce que cela pourrait affecter d'autre?", "Que se passe t il si nous attendons?", "Comment cela se connecte aux decisions passees?"],
+        
+        heroTitle: "Une surface de facilitation pour des decisions qui tiennent.",
+        heroSubtitle: "Pour les facilitateurs qui croient que l'alignement se fait dans la salle, pendant que tout le monde est present.",
+        
+        youKnowThis: "Vous le savez deja.",
+        youKnowThisDesc: "Les groupes parlent. Les tetes hochent. Tout le monde part. Puis quelqu'un demande \"qu'avons nous decide?\" et chacun a une reponse differente.",
+        
+        whatRoomDoes: "Ce que The Room fait",
+        roomPurpose: "Les outils d'enregistrement capturent ce qui a ete dit. The Room tient l'espace pour ce que cela signifie.",
+        
+        forFacilitators: "Construit pour les facilitateurs",
+        forFacilitatorsDesc: "The Room soutient votre pratique. Il gere la structure pour que vous puissiez vous concentrer sur les personnes.",
+        whatYouGet: "Ce que vous obtenez",
+        
+        feature1Title: "Un seul focus a la fois",
+        feature1Desc: "Le sujet en cours remplit l'ecran. Tout le monde voit ce qui est discute, note, convenu.",
+        feature2Title: "Trois lentilles de reflexion",
+        feature2Desc: "Quand le groupe est bloque, des questions aident a faire emerger ce qui manque.",
+        feature3Title: "Des engagements pris ensemble",
+        feature3Desc: "Capturer qui fera quoi pendant que tout le monde est present.",
+        
+        facilitatorTips: "Guidance pour facilitateurs",
+        facilitatorTipsDesc: "Des invites optionnelles pour soutenir votre pratique.",
+        
+        grounded: "Fonde sur la recherche",
+        groundedDesc: "The Room s'appuie sur la cognition distribuee, la theorie du terrain commun, les objets frontieres et la construction de sens.",
+        researchCredits: "Hutchins · Clark & Brennan · Star & Griesemer · Weick · Checkland · Ulrich",
+        
+        scenarios: "Choisir un type de session",
+        scenarioBlank: "Vide", scenarioBlankDesc: "Commencer avec votre propre structure",
+        scenarioStrategy: "Session strategie", scenarioStrategyDesc: "Des objectifs aux decisions puis a l'action",
+        scenarioAlignment: "Alignement equipe", scenarioAlignmentDesc: "Faire emerger les perspectives et trouver un terrain commun",
+        scenarioRetro: "Retrospective", scenarioRetroDesc: "Reflechir a ce qui s'est passe et s'ameliorer",
+        scenarioCritique: "Critique design", scenarioCritiqueDesc: "Donner un retour structure sur le travail",
+        
+        recentSessions: "Sessions recentes",
+        
+        readyToFacilitate: "Pret a faciliter?",
+        readyToFacilitateDesc: "Demarrez une session, partagez votre ecran, et tenez l'espace pour les decisions qui comptent.",
+        
+        madeFor: "Fait pour les facilitateurs, coachs et consultants qui croient au pouvoir de penser ensemble.",
+        dataLocal: "Vos sessions restent dans votre navigateur.",
+        
+        topicsIncluded: "Sujets inclus",
+        
+        tipSetup: "Une intention claire garde le groupe oriente quand la discussion derive. Ecrivez la en une phrase: que devons nous obtenir?",
+        tipAgenda: "Ordonnez les sujets par energie. Commencez par quelque chose qui cree de l'elan.",
+        tipRoomStart: "Lisez le sujet a voix haute avant que quiconque reponde. Laissez le silence faire son travail.",
+        tipPause: "Cette pause existe parce que les groupes avancent souvent avant que l'alignement soit reel.",
+        tipCommitment: "Un engagement a un proprietaire et une action. \"Nous devrions penser a X\" est un point de discussion. \"Jo redigera X d'ici vendredi\" est un engagement.",
+        
+        exportSession: "Exporter", importSession: "Importer",
+        addToCalendar: "Ajouter au calendrier", saved: "Enregistre",
+        completed: "fait", pending: "a faire", allCommitments: "tout",
+        untitledSession: "Session sans titre", untitledTopic: "Sujet sans titre", theGroup: "Le groupe",
+        topic: "Sujet", startOver: "Recommencer?", confirmStartOver: "Demarrer une nouvelle session?",
+        copyAgenda: "Copier", agendaCopied: "Copie",
+        shareBeforeMeeting: "Partagez ceci avec les participants au prealable",
+        timeEstimate: "min", dueDate: "Echeance",
+        moveUp: "Monter", moveDown: "Descendre",
+        aob: "Autres sujets", aobDesc: "Sujets apparus mais pour une prochaine session",
+        aobPlaceholder: "Sujet pour plus tard...", noAob: "Aucun", addToAgenda: "Ajouter a cette session",
+        showTip: "Voir conseil", hideTip: "Masquer",
+        menu: "Menu",
+        
+        exportTitle: "Resume de session",
+        exportFacilitatedWith: "Facilite avec The Room",
+      }
+    };
+
+    const LangContext = createContext();
+    const useLang = () => useContext(LangContext);
+
+    const STORAGE_KEY = "the-room-v15";
+    const HISTORY_KEY = "the-room-history-v3";
+    const LANG_KEY = "the-room-lang";
+    const SKIP_PAUSE_KEY = "the-room-skip-pause";
+
+    // Template definitions with full details
+    const getTemplates = (lang) => ({
+      blank: {
+        title: "", duration: "60",
+        topics: [{ id: Date.now(), title: "", notes: "", commitments: [], timeEstimate: "" }],
+      },
+      strategy: {
+        title: lang === "fr" ? "Session strategie" : "Strategy Session",
+        duration: "90",
+        topics: [
+          { id: 1, title: lang === "fr" ? "Qu'essayons nous d'atteindre?" : "What are we trying to achieve?", notes: "", commitments: [], timeEstimate: "15" },
+          { id: 2, title: lang === "fr" ? "Quelles options avons nous?" : "What options do we have?", notes: "", commitments: [], timeEstimate: "25" },
+          { id: 3, title: lang === "fr" ? "Que decidons nous aujourd'hui?" : "What will we decide today?", notes: "", commitments: [], timeEstimate: "25" },
+          { id: 4, title: lang === "fr" ? "Quelles sont nos prochaines etapes?" : "What are our next steps?", notes: "", commitments: [], timeEstimate: "15" },
+        ],
+      },
+      alignment: {
+        title: lang === "fr" ? "Alignement equipe" : "Team Alignment",
+        duration: "60",
+        topics: [
+          { id: 1, title: lang === "fr" ? "Que voit chaque personne?" : "What does each person see?", notes: "", commitments: [], timeEstimate: "20" },
+          { id: 2, title: lang === "fr" ? "Ou avons nous des tensions?" : "Where do we have tension?", notes: "", commitments: [], timeEstimate: "20" },
+          { id: 3, title: lang === "fr" ? "Quel terrain partageons nous?" : "What ground do we share?", notes: "", commitments: [], timeEstimate: "15" },
+        ],
+      },
+      retro: {
+        title: lang === "fr" ? "Retrospective" : "Retrospective",
+        duration: "60",
+        topics: [
+          { id: 1, title: lang === "fr" ? "Qu'est ce qui a bien fonctionne?" : "What worked well?", notes: "", commitments: [], timeEstimate: "15" },
+          { id: 2, title: lang === "fr" ? "Que pourrions nous ameliorer?" : "What could we improve?", notes: "", commitments: [], timeEstimate: "20" },
+          { id: 3, title: lang === "fr" ? "Que ferons nous differemment?" : "What will we do differently?", notes: "", commitments: [], timeEstimate: "20" },
+        ],
+      },
+      critique: {
+        title: lang === "fr" ? "Critique design" : "Design Critique",
+        duration: "45",
+        topics: [
+          { id: 1, title: lang === "fr" ? "Contexte: que regardons nous?" : "Context: what are we looking at?", notes: "", commitments: [], timeEstimate: "10" },
+          { id: 2, title: lang === "fr" ? "Retours: que remarquons nous?" : "Feedback: what do we notice?", notes: "", commitments: [], timeEstimate: "20" },
+          { id: 3, title: lang === "fr" ? "Synthese: que devrait changer?" : "Synthesis: what should change?", notes: "", commitments: [], timeEstimate: "15" },
+        ],
+      },
+    });
+
+    const createSession = (template = "blank", lang = "en") => {
+      const templates = getTemplates(lang);
+      const tmpl = templates[template] || templates.blank;
+      return {
+        id: Date.now().toString(36),
+        title: tmpl.title,
+        intention: "",
+        facilitator: "",
+        attendees: "",
+        date: new Date().toISOString().split("T")[0],
+        time: "10:00",
+        duration: tmpl.duration,
+        topics: tmpl.topics.map(t => ({ ...t, id: Date.now() + Math.random() })),
+        aobTopics: [],
+        currentTopicIndex: 0,
+        phase: "setup",
+      };
+    };
+
+    const load = () => { try { const s = localStorage.getItem(STORAGE_KEY); if (s) { const p = JSON.parse(s); if (p.title !== undefined || p.phase) return { ...createSession(), ...p }; } return null; } catch { return null; } };
+    const save = (s) => { try { if (s) localStorage.setItem(STORAGE_KEY, JSON.stringify(s)); else localStorage.removeItem(STORAGE_KEY); } catch {} };
+    const loadLang = () => { try { return localStorage.getItem(LANG_KEY) || "en"; } catch { return "en"; } };
+    const saveLang = (l) => { try { localStorage.setItem(LANG_KEY, l); } catch {} };
+    const loadHistory = () => { try { const h = localStorage.getItem(HISTORY_KEY); return h ? JSON.parse(h) : []; } catch { return []; } };
+    const saveHistory = (h) => { try { localStorage.setItem(HISTORY_KEY, JSON.stringify(h.slice(0, 30))); } catch {} };
+    const addToHistory = (s) => { const h = loadHistory(); const i = h.findIndex(x => x.id === s.id); if (i >= 0) h[i] = s; else h.unshift(s); saveHistory(h); };
+    const loadSkipPause = () => { try { return localStorage.getItem(SKIP_PAUSE_KEY) === "true"; } catch { return false; } };
+    const saveSkipPause = (v) => { try { localStorage.setItem(SKIP_PAUSE_KEY, v ? "true" : "false"); } catch {} };
+
+    const Icon = {
+      arrow: <svg width="18" height="18" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24"><path d="M5 12h14M12 5l7 7-7 7"/></svg>,
+      back: <svg width="18" height="18" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>,
+      plus: <svg width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg>,
+      check: <svg width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24"><path d="M20 6L9 17l-5-5"/></svg>,
+      x: <svg width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" viewBox="0 0 24 24"><path d="M18 6L6 18M6 6l12 12"/></svg>,
+      clock: <svg width="16" height="16" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>,
+      copy: <svg width="16" height="16" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/></svg>,
+      print: <svg width="16" height="16" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24"><path d="M6 9V2h12v7M6 18H4a2 2 0 01-2-2v-5a2 2 0 012-2h16a2 2 0 012 2v5a2 2 0 01-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>,
+      refresh: <svg width="16" height="16" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24"><path d="M23 4v6h-6M1 20v-6h6"/><path d="M3.51 9a9 9 0 0114.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0020.49 15"/></svg>,
+      help: <svg width="16" height="16" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 015.83 1c0 2-3 3-3 3M12 17h.01"/></svg>,
+      target: <svg width="18" height="18" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/></svg>,
+      lightbulb: <svg width="22" height="22" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24"><path d="M9 18h6M10 22h4M12 2a7 7 0 00-4 12.73V17h8v-2.27A7 7 0 0012 2z"/></svg>,
+      up: <svg width="14" height="14" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24"><path d="M18 15l-6-6-6 6"/></svg>,
+      down: <svg width="14" height="14" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24"><path d="M6 9l6 6 6-6"/></svg>,
+      calendar: <svg width="16" height="16" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg>,
+      download: <svg width="16" height="16" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4M7 10l5 5 5-5M12 15V3"/></svg>,
+      upload: <svg width="16" height="16" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4M17 8l-5-5-5 5M12 3v12"/></svg>,
+      users: <svg width="16" height="16" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87M16 3.13a4 4 0 010 7.75"/></svg>,
+      menu: <svg width="20" height="20" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" viewBox="0 0 24 24"><path d="M3 12h18M3 6h18M3 18h18"/></svg>,
+      chevronDown: <svg width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24"><path d="M6 9l6 6 6-6"/></svg>,
+    };
+
+    const formatTime = (secs) => {
+      const absSecs = Math.abs(secs);
+      const mins = Math.floor(absSecs / 60);
+      const s = absSecs % 60;
+      return `${mins}:${s.toString().padStart(2, "0")}`;
+    };
+    const calcEndTime = (start, mins) => { if (!start) return ""; const [h, m] = start.split(":").map(Number); const d = new Date(); d.setHours(h, m + parseInt(mins || 0)); return d.toTimeString().slice(0, 5); };
+    const formatDate = (d) => { try { return new Date(d).toLocaleDateString(undefined, { month: "short", day: "numeric" }); } catch { return d; } };
+
+    const AutoTextarea = ({ value, onChange, placeholder, className = "", style = {}, ...props }) => {
+      const ref = useRef(null);
+      useLayoutEffect(() => { if (ref.current) { ref.current.style.height = "auto"; ref.current.style.height = ref.current.scrollHeight + "px"; } }, [value]);
+      return <textarea ref={ref} value={value} onChange={onChange} placeholder={placeholder} className={"textarea-auto " + className} style={style} rows={1} {...props} />;
+    };
+
+    // Topic input that expands for long text
+    const TopicInput = ({ value, onChange, placeholder }) => {
+      const ref = useRef(null);
+      
+      const adjustHeight = () => {
+        if (ref.current) {
+          ref.current.style.height = "auto";
+          ref.current.style.height = Math.max(24, ref.current.scrollHeight) + "px";
+        }
+      };
+      
+      useLayoutEffect(() => {
+        adjustHeight();
+      }, [value]);
+      
+      // Also adjust on window resize for responsive behavior
+      useEffect(() => {
+        window.addEventListener("resize", adjustHeight);
+        return () => window.removeEventListener("resize", adjustHeight);
+      }, []);
+      
+      return (
+        <textarea
+          ref={ref}
+          value={value}
+          onChange={onChange}
+          placeholder={placeholder}
+          rows={1}
+          style={{
+            flex: 1,
+            width: "100%",
+            fontSize: "1rem",
+            border: "none",
+            outline: "none",
+            background: "transparent",
+            fontFamily: "inherit",
+            minWidth: 0,
+            padding: 0,
+            margin: 0,
+            lineHeight: 1.5,
+            resize: "none",
+            overflow: "hidden",
+            color: "var(--text)",
+            display: "block",
+          }}
+        />
+      );
+    };
+
+    const LangToggle = ({ lang, setLang }) => (
+      <div className="lang-toggle">
+        <button onClick={() => setLang("en")} className={lang === "en" ? "active" : ""}>EN</button>
+        <button onClick={() => setLang("fr")} className={lang === "fr" ? "active" : ""}>FR</button>
+      </div>
+    );
+
+    const Checkbox = ({ checked, onChange }) => (
+      <div className={`checkbox ${checked ? "checked" : ""}`} onClick={onChange}>{checked && Icon.check}</div>
+    );
+
+    const SaveIndicator = ({ show }) => show ? <div className="save-indicator animate-save">{Icon.check} Saved</div> : null;
+
+    const TipBox = ({ text, show, onToggle }) => {
+      if (!show) return <button onClick={onToggle} className="btn btn-ghost btn-icon" style={{ opacity: 0.6 }}>{Icon.lightbulb}</button>;
+      return (
+        <div className="tip-box animate-scale" style={{ position: "relative" }}>
+          <button onClick={onToggle} className="btn btn-ghost btn-icon" style={{ position: "absolute", top: 8, right: 8, padding: 4 }}>{Icon.x}</button>
+          <div style={{ display: "flex", gap: 12, paddingRight: 28 }}>
+            <span style={{ flexShrink: 0 }}>{Icon.lightbulb}</span>
+            <span>{text}</span>
+          </div>
+        </div>
+      );
+    };
+
+    const MobileNav = ({ phase, setPhase, canEnterRoom }) => {
+      const { t } = useLang();
+      const [open, setOpen] = useState(false);
+      const phases = [
+        { id: "setup", label: t.setup },
+        { id: "agenda", label: t.agenda },
+        { id: "room", label: t.session, disabled: !canEnterRoom },
+        { id: "review", label: t.commitments },
+      ];
+      const current = phases.find(p => p.id === phase);
+      
+      return (
+        <div className="mobile-nav mobile-only" style={{ position: "relative" }}>
+          <button onClick={() => setOpen(!open)} className="btn btn-secondary" style={{ display: "flex", alignItems: "center", gap: 8, padding: "12px 16px" }}>
+            {Icon.menu}
+            <span>{current?.label || t.menu}</span>
+            {Icon.chevronDown}
+          </button>
+          {open && (
+            <>
+              <div style={{ position: "fixed", inset: 0, zIndex: 40 }} onClick={() => setOpen(false)} />
+              <div className="mobile-nav-dropdown animate-dropdown">
+                {phases.map(p => (
+                  <div 
+                    key={p.id} 
+                    className={`mobile-nav-item ${p.id === phase ? "active" : ""} ${p.disabled ? "disabled" : ""}`}
+                    onClick={() => { if (!p.disabled) { setPhase(p.id); setOpen(false); } }}
+                  >
+                    <span>{p.label}</span>
+                    {p.id === phase && Icon.check}
+                  </div>
+                ))}
+              </div>
+            </>
+          )}
+        </div>
+      );
+    };
+
+    const exportSession = (session, t) => {
+      const blob = new Blob([JSON.stringify(session, null, 2)], { type: "application/json" });
+      const a = document.createElement("a"); a.href = URL.createObjectURL(blob);
+      a.download = `${(session.title || "session").replace(/[^a-z0-9]/gi, "-")}-${session.date}.room.json`;
+      a.click(); URL.revokeObjectURL(a.href);
+    };
+
+    const downloadCalendar = (session, t) => {
+      const start = new Date(`${session.date}T${session.time}`);
+      const end = new Date(start.getTime() + parseInt(session.duration) * 60000);
+      const fmt = (d) => d.toISOString().replace(/[-:]/g, "").split(".")[0] + "Z";
+      const agenda = session.topics.filter(x => x.title).map((x, i) => `${i+1}. ${x.title}`).join("\\n");
+      const ics = `BEGIN:VCALENDAR\nVERSION:2.0\nBEGIN:VEVENT\nDTSTART:${fmt(start)}\nDTEND:${fmt(end)}\nSUMMARY:${session.title}\nDESCRIPTION:${session.intention ? t.goal + ": " + session.intention + "\\n\\n" : ""}${agenda}\nEND:VEVENT\nEND:VCALENDAR`;
+      const blob = new Blob([ics], { type: "text/calendar" });
+      const a = document.createElement("a"); a.href = URL.createObjectURL(blob); a.download = `${session.title || "session"}.ics`; a.click();
+    };
+
+    // =============================================
+    // LANDING PAGE
+    // =============================================
+    const LandingPage = ({ currentSession, onStart, onContinue, onOpenSession, onImport }) => {
+      const { t, lang, setLang } = useLang();
+      const [history] = useState(loadHistory);
+      const [selectedTemplate, setSelectedTemplate] = useState("blank");
+      const fileRef = useRef();
+      const templates = getTemplates(lang);
+
+      const handleImport = (e) => {
+        const file = e.target.files?.[0]; if (!file) return;
+        const reader = new FileReader();
+        reader.onload = (ev) => { try { const data = JSON.parse(ev.target.result); if (data.topics) onImport(data); } catch {} };
+        reader.readAsText(file); e.target.value = "";
+      };
+
+      const scenarios = [
+        { id: "blank", icon: "○", name: t.scenarioBlank, desc: t.scenarioBlankDesc },
+        { id: "strategy", icon: "◎", name: t.scenarioStrategy, desc: t.scenarioStrategyDesc },
+        { id: "alignment", icon: "◑", name: t.scenarioAlignment, desc: t.scenarioAlignmentDesc },
+        { id: "retro", icon: "↻", name: t.scenarioRetro, desc: t.scenarioRetroDesc },
+        { id: "critique", icon: "◇", name: t.scenarioCritique, desc: t.scenarioCritiqueDesc },
+      ];
+
+      const selectedTemplateData = templates[selectedTemplate];
+
+      return (
+        <div style={{ minHeight: "100vh" }}>
+          <input type="file" ref={fileRef} accept=".json,.room.json" onChange={handleImport} style={{ display: "none" }} />
+          
+          {/* Header */}
+          <header style={{ position: "fixed", top: 0, left: 0, right: 0, padding: "12px 20px", background: "rgba(245,245,247,0.9)", backdropFilter: "blur(10px)", zIndex: 50, borderBottom: "1px solid var(--border-light)" }}>
+            <div style={{ maxWidth: 1000, margin: "0 auto", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+              <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                <div style={{ width: 36, height: 36, borderRadius: 9, background: "var(--accent)", color: "white", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "1.125rem" }}>◐</div>
+                <span className="desktop-only" style={{ fontWeight: 600, fontSize: "1.0625rem" }}>{t.appName}</span>
+              </div>
+              <LangToggle lang={lang} setLang={setLang} />
+            </div>
+          </header>
+
+          {/* Hero */}
+          <section style={{ paddingTop: 100, paddingBottom: 48, textAlign: "center", padding: "100px 20px 48px" }}>
+            <div style={{ maxWidth: 680, margin: "0 auto" }}>
+              <div className="animate-in" style={{ marginBottom: 20 }}>
+                <div className="animate-float" style={{ width: 56, height: 56, borderRadius: 14, background: "var(--accent)", color: "white", display: "inline-flex", alignItems: "center", justifyContent: "center", fontSize: "1.5rem", boxShadow: "var(--shadow-lg)" }}>◐</div>
+              </div>
+              <h1 className="font-serif animate-in delay-1" style={{ fontSize: "clamp(1.75rem, 5vw, 2.5rem)", lineHeight: 1.15, marginBottom: 18 }}>
+                {t.heroTitle}
+              </h1>
+              <p className="animate-in delay-2" style={{ fontSize: "1.125rem", color: "var(--text-secondary)", maxWidth: 520, margin: "0 auto 32px", lineHeight: 1.5 }}>
+                {t.heroSubtitle}
+              </p>
+              <div className="animate-in delay-3" style={{ display: "flex", gap: 12, justifyContent: "center", flexWrap: "wrap" }}>
+                <button onClick={() => onStart(selectedTemplate)} className="btn btn-primary btn-large">{t.startSession} {Icon.arrow}</button>
+                {currentSession && currentSession.title && (
+                  <button onClick={onContinue} className="btn btn-secondary btn-large">{t.continueSession}</button>
+                )}
+              </div>
+            </div>
+          </section>
+
+          {/* Continue card */}
+          {currentSession && currentSession.title && (
+            <section style={{ padding: "0 20px 40px" }}>
+              <div style={{ maxWidth: 520, margin: "0 auto" }}>
+                <div className="card animate-in" style={{ padding: 18, border: "2px solid var(--green)", cursor: "pointer" }} onClick={onContinue}>
+                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 16 }}>
+                    <div>
+                      <div style={{ fontSize: "0.75rem", fontWeight: 600, color: "var(--green-text)", textTransform: "uppercase", marginBottom: 4 }}>In progress</div>
+                      <div style={{ fontWeight: 600, fontSize: "1.0625rem", marginBottom: 2 }}>{currentSession.title}</div>
+                      <div style={{ fontSize: "0.875rem", color: "var(--text-muted)" }}>
+                        {currentSession.date} · {currentSession.topics?.length || 0} {t.topics}
+                      </div>
+                    </div>
+                    <div style={{ color: "var(--green)" }}>{Icon.arrow}</div>
+                  </div>
+                </div>
+              </div>
+            </section>
+          )}
+
+          {/* The problem */}
+          <section style={{ padding: "48px 20px", background: "var(--bg-card)" }}>
+            <div style={{ maxWidth: 600, margin: "0 auto", textAlign: "center" }}>
+              <h2 className="font-serif" style={{ fontSize: "1.5rem", marginBottom: 16 }}>{t.youKnowThis}</h2>
+              <p style={{ fontSize: "1.0625rem", color: "var(--text-secondary)", lineHeight: 1.6 }}>{t.youKnowThisDesc}</p>
+            </div>
+          </section>
+
+          {/* What The Room does */}
+          <section style={{ padding: "48px 20px" }}>
+            <div style={{ maxWidth: 600, margin: "0 auto", textAlign: "center" }}>
+              <h2 className="font-serif" style={{ fontSize: "1.5rem", marginBottom: 16 }}>{t.whatRoomDoes}</h2>
+              <p style={{ fontSize: "1.0625rem", color: "var(--text-secondary)", lineHeight: 1.6 }}>{t.roomPurpose}</p>
+            </div>
+          </section>
+
+          {/* Features with signpost */}
+          <section style={{ padding: "48px 20px", background: "var(--bg-card)" }}>
+            <div style={{ maxWidth: 800, margin: "0 auto" }}>
+              <div style={{ textAlign: "center", marginBottom: 32 }}>
+                <h2 className="font-serif" style={{ fontSize: "1.5rem", marginBottom: 10 }}>{t.forFacilitators}</h2>
+                <p style={{ color: "var(--text-secondary)", fontSize: "1.0625rem" }}>{t.forFacilitatorsDesc}</p>
+              </div>
+              <div style={{ textAlign: "center", marginBottom: 20 }}>
+                <span style={{ fontSize: "0.75rem", fontWeight: 600, color: "var(--text-muted)", textTransform: "uppercase", letterSpacing: "0.05em" }}>{t.whatYouGet}</span>
+              </div>
+              <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(260px, 1fr))", gap: 18 }} className="mobile-grid-1">
+                {[
+                  { bg: "var(--blue-soft)", color: "var(--blue-text)", title: t.feature1Title, desc: t.feature1Desc },
+                  { bg: "var(--purple-soft)", color: "var(--purple-text)", title: t.feature2Title, desc: t.feature2Desc },
+                  { bg: "var(--green-soft)", color: "var(--green-text)", title: t.feature3Title, desc: t.feature3Desc },
+                ].map((f, i) => (
+                  <div key={i} style={{ padding: 22, background: f.bg, borderRadius: "var(--radius-lg)" }}>
+                    <h3 style={{ fontWeight: 600, marginBottom: 10, color: f.color, fontSize: "1.0625rem" }}>{f.title}</h3>
+                    <p style={{ color: "var(--text-secondary)", fontSize: "1rem", lineHeight: 1.5 }}>{f.desc}</p>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </section>
+
+          {/* Research grounding */}
+          <section style={{ padding: "48px 20px" }}>
+            <div style={{ maxWidth: 600, margin: "0 auto", textAlign: "center" }}>
+              <h2 className="font-serif" style={{ fontSize: "1.5rem", marginBottom: 14 }}>{t.grounded}</h2>
+              <p style={{ color: "var(--text-secondary)", lineHeight: 1.6, marginBottom: 14, fontSize: "1rem" }}>{t.groundedDesc}</p>
+              <p style={{ fontSize: "0.75rem", color: "var(--text-muted)", letterSpacing: "0.02em" }}>{t.researchCredits}</p>
+            </div>
+          </section>
+
+          {/* Session types with preview */}
+          <section style={{ padding: "48px 20px", background: "var(--bg-card)" }}>
+            <div style={{ maxWidth: 640, margin: "0 auto" }}>
+              <h2 style={{ fontSize: "0.875rem", fontWeight: 600, color: "var(--text-muted)", textTransform: "uppercase", letterSpacing: "0.03em", marginBottom: 18, textAlign: "center" }}>
+                {t.scenarios}
+              </h2>
+              <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(180px, 1fr))", gap: 12, marginBottom: 24 }} className="mobile-grid-2">
+                {scenarios.map(s => (
+                  <div 
+                    key={s.id} 
+                    className={`template-card ${selectedTemplate === s.id ? "selected" : ""}`} 
+                    onClick={() => setSelectedTemplate(s.id)}
+                  >
+                    <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 6 }}>
+                      <span style={{ fontSize: "1.25rem", opacity: 0.7 }}>{s.icon}</span>
+                      <span style={{ fontWeight: 600, fontSize: "0.9375rem" }}>{s.name}</span>
+                    </div>
+                    <div style={{ fontSize: "0.8125rem", color: "var(--text-muted)", lineHeight: 1.4 }}>{s.desc}</div>
+                  </div>
+                ))}
+              </div>
+              
+              {/* Template preview */}
+              {selectedTemplate !== "blank" && selectedTemplateData && (
+                <div className="card animate-scale" style={{ padding: 18, marginBottom: 24 }}>
+                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 14 }}>
+                    <div>
+                      <div style={{ fontWeight: 600, fontSize: "1.0625rem" }}>{selectedTemplateData.title}</div>
+                      <div style={{ fontSize: "0.8125rem", color: "var(--text-muted)", display: "flex", alignItems: "center", gap: 6, marginTop: 4 }}>
+                        {Icon.clock} {selectedTemplateData.duration} {t.timeEstimate}
+                      </div>
+                    </div>
+                  </div>
+                  <div style={{ fontSize: "0.75rem", fontWeight: 600, color: "var(--text-muted)", textTransform: "uppercase", marginBottom: 10 }}>{t.topicsIncluded}</div>
+                  <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+                    {selectedTemplateData.topics.map((topic, i) => (
+                      <div key={i} className="template-topic">
+                        <div className="template-topic-num">{i + 1}</div>
+                        <span style={{ flex: 1 }}>{topic.title}</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+              
+              <div style={{ display: "flex", justifyContent: "center", gap: 12, flexWrap: "wrap" }}>
+                <button onClick={() => onStart(selectedTemplate)} className="btn btn-primary btn-large">{t.startSession} {Icon.arrow}</button>
+                <button onClick={() => fileRef.current?.click()} className="btn btn-secondary">{Icon.upload} {t.importSession}</button>
+              </div>
+            </div>
+          </section>
+
+          {/* Recent sessions */}
+          {history.length > 0 && (
+            <section style={{ padding: "36px 20px 48px" }}>
+              <div style={{ maxWidth: 520, margin: "0 auto" }}>
+                <h2 style={{ fontSize: "0.875rem", fontWeight: 600, color: "var(--text-muted)", textTransform: "uppercase", letterSpacing: "0.03em", marginBottom: 14, textAlign: "center" }}>
+                  {t.recentSessions}
+                </h2>
+                <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+                  {history.slice(0, 4).map(s => (
+                    <div key={s.id} className="session-card" onClick={() => onOpenSession(s)}>
+                      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 12 }}>
+                        <div style={{ minWidth: 0 }}>
+                          <div style={{ fontWeight: 600, fontSize: "1rem", marginBottom: 2, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{s.title || t.untitledSession}</div>
+                          <div style={{ fontSize: "0.875rem", color: "var(--text-muted)" }}>
+                            {formatDate(s.date)} · {s.topics?.length || 0} {t.topics}
+                          </div>
+                        </div>
+                        <div style={{ color: "var(--text-muted)" }}>{Icon.arrow}</div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </section>
+          )}
+
+          {/* Final CTA */}
+          <section style={{ padding: "56px 20px", background: "var(--bg-dark)", color: "var(--text-on-dark)", textAlign: "center" }}>
+            <div style={{ maxWidth: 480, margin: "0 auto" }}>
+              <h2 className="font-serif" style={{ fontSize: "1.5rem", marginBottom: 14 }}>{t.readyToFacilitate}</h2>
+              <p style={{ fontSize: "1rem", opacity: 0.8, marginBottom: 24, lineHeight: 1.5 }}>{t.readyToFacilitateDesc}</p>
+              <button onClick={() => onStart(selectedTemplate)} className="btn btn-large" style={{ background: "white", color: "var(--text)" }}>{t.startSession} {Icon.arrow}</button>
+            </div>
+          </section>
+
+          {/* Footer */}
+          <footer style={{ padding: "32px 20px", borderTop: "1px solid var(--border-light)" }}>
+            <div style={{ maxWidth: 520, margin: "0 auto", textAlign: "center" }}>
+              <p style={{ color: "var(--text-secondary)", fontSize: "0.9375rem", marginBottom: 8 }}>{t.madeFor}</p>
+              <p style={{ color: "var(--text-muted)", fontSize: "0.8125rem" }}>{t.dataLocal}</p>
+            </div>
+          </footer>
+        </div>
+      );
+    };
+
+    // =============================================
+    // APP COMPONENTS
+    // =============================================
+    
+    const HelpModal = ({ onClose }) => {
+      const { t } = useLang();
+      const steps = [{ n: 1, title: t.setup, desc: t.setupDesc }, { n: 2, title: t.agenda, desc: t.agendaDesc }, { n: 3, title: t.session, desc: t.sessionDesc }, { n: 4, title: t.commitments, desc: t.commitmentsDesc }];
+      return (
+        <div className="animate-fade no-print" style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.5)", backdropFilter: "blur(8px)", zIndex: 100, display: "flex", alignItems: "center", justifyContent: "center", padding: 20 }} onClick={onClose}>
+          <div className="card animate-scale" style={{ maxWidth: 440, width: "100%", padding: 24 }} onClick={e => e.stopPropagation()}>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 18 }}>
+              <h2 className="font-serif" style={{ fontSize: "1.375rem" }}>{t.howThisWorks}</h2>
+              <button onClick={onClose} className="btn btn-ghost btn-icon">{Icon.x}</button>
+            </div>
+            <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
+              {steps.map(s => (
+                <div key={s.n} style={{ display: "flex", gap: 14 }}>
+                  <div style={{ width: 28, height: 28, borderRadius: "50%", background: "var(--accent)", color: "white", display: "flex", alignItems: "center", justifyContent: "center", fontWeight: 600, fontSize: "0.875rem", flexShrink: 0 }}>{s.n}</div>
+                  <div><div style={{ fontWeight: 600, marginBottom: 3, fontSize: "1rem" }}>{s.title}</div><div style={{ color: "var(--text-secondary)", fontSize: "0.9375rem" }}>{s.desc}</div></div>
+                </div>
+              ))}
+            </div>
+            <button onClick={onClose} className="btn btn-primary" style={{ width: "100%", marginTop: 20 }}>{t.gotIt}</button>
+          </div>
+        </div>
+      );
+    };
+
+    const PauseModal = ({ onContinue, onBack, isLast, onSkipChange }) => {
+      const { t } = useLang();
+      const [skipChecked, setSkipChecked] = useState(false);
+      
+      const handleContinue = () => {
+        if (skipChecked) {
+          saveSkipPause(true);
+          onSkipChange(true);
+        }
+        onContinue();
+      };
+      
+      return (
+        <div className="animate-fade no-print" style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.5)", backdropFilter: "blur(8px)", zIndex: 100, display: "flex", alignItems: "center", justifyContent: "center", padding: 20 }}>
+          <div className="card animate-scale" style={{ maxWidth: 380, width: "100%", padding: 24, textAlign: "center" }}>
+            <div style={{ width: 48, height: 48, borderRadius: 12, background: "var(--accent-soft)", display: "flex", alignItems: "center", justifyContent: "center", margin: "0 auto 16px", fontSize: "1.125rem" }}>◐</div>
+            <h2 className="font-serif" style={{ fontSize: "1.25rem", marginBottom: 10 }}>{t.beforeWeMove}</h2>
+            <p style={{ color: "var(--text-secondary)", marginBottom: 20, fontSize: "1rem" }}>{t.everyoneClear}<br />{t.capturedAgreed}</p>
+            <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+              <button onClick={handleContinue} className="btn btn-primary" style={{ width: "100%" }}>{isLast ? t.yesSeeCommitments : t.yesNextTopic}</button>
+              <button onClick={onBack} className="btn btn-secondary" style={{ width: "100%" }}>{t.keepDiscussing}</button>
+            </div>
+            <label style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 10, marginTop: 18, cursor: "pointer", fontSize: "0.875rem", color: "var(--text-muted)", minHeight: "var(--touch-target)" }}>
+              <input type="checkbox" checked={skipChecked} onChange={e => setSkipChecked(e.target.checked)} style={{ width: 20, height: 20 }} />
+              {t.skipNextTime}
+            </label>
+          </div>
+        </div>
+      );
+    };
+
+    const PhaseNav = ({ phase, setPhase, canEnterRoom }) => {
+      const { t } = useLang();
+      const phases = [{ id: "setup", label: t.setup }, { id: "agenda", label: t.agenda }, { id: "room", label: t.session }, { id: "review", label: t.commitments }];
+      const currentIndex = phases.findIndex(p => p.id === phase);
+      return (
+        <div className="desktop-only" style={{ display: "flex", alignItems: "center", gap: 4, background: "var(--bg-secondary)", padding: 4, borderRadius: "var(--radius)" }}>
+          {phases.map((p, i) => {
+            const isActive = p.id === phase, isPast = i < currentIndex, isDisabled = p.id === "room" && !canEnterRoom;
+            return <button key={p.id} onClick={() => !isDisabled && setPhase(p.id)} disabled={isDisabled} className="btn" style={{ padding: "12px 18px", fontSize: "0.9375rem", fontWeight: isActive ? 600 : 500, borderRadius: 8, background: isActive ? "var(--bg-card)" : "transparent", color: isActive ? "var(--text)" : isPast ? "var(--text-secondary)" : "var(--text-muted)", boxShadow: isActive ? "var(--shadow-sm)" : "none", minHeight: 44 }}>{p.label}</button>;
+          })}
+        </div>
+      );
+    };
+
+    const SetupPhase = ({ session, update }) => {
+      const { t } = useLang();
+      const [showTip, setShowTip] = useState(false);
+      return (
+        <div className="animate-in" style={{ maxWidth: 560, margin: "0 auto", width: "100%" }}>
+          <div className="card" style={{ padding: 24, marginBottom: 14 }}>
+            <label style={{ display: "block", fontSize: "0.75rem", fontWeight: 600, color: "var(--text-secondary)", marginBottom: 10, textTransform: "uppercase" }}>{t.meetingTitle}</label>
+            <AutoTextarea value={session.title} onChange={e => update({ ...session, title: e.target.value })} placeholder={t.meetingTitlePlaceholder} className="font-serif" style={{ fontSize: "1.5rem", padding: 0, lineHeight: 1.3 }} autoFocus />
+          </div>
+          <div className="card" style={{ padding: 24, marginBottom: 14 }}>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "start", marginBottom: 10 }}>
+              <label style={{ fontSize: "0.75rem", fontWeight: 600, color: "var(--text-secondary)", textTransform: "uppercase" }}>{t.whatToLeaveWith}</label>
+              <TipBox text={t.tipSetup} show={showTip} onToggle={() => setShowTip(!showTip)} />
+            </div>
+            <AutoTextarea value={session.intention} onChange={e => update({ ...session, intention: e.target.value })} placeholder={t.intentionPlaceholder} style={{ fontSize: "1.125rem", padding: 0 }} />
+            <p style={{ fontSize: "0.8125rem", color: "var(--text-muted)", marginTop: 10 }}>{t.intentionHelp}</p>
+          </div>
+          <div className="card" style={{ padding: 24 }}>
+            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 14, marginBottom: 14 }} className="mobile-grid-1">
+              <div>
+                <label style={{ display: "block", fontSize: "0.75rem", fontWeight: 600, color: "var(--text-secondary)", marginBottom: 8, textTransform: "uppercase" }}>{t.meetingDate}</label>
+                <input type="date" value={session.date} onChange={e => update({ ...session, date: e.target.value })} className="input" />
+              </div>
+              <div>
+                <label style={{ display: "block", fontSize: "0.75rem", fontWeight: 600, color: "var(--text-secondary)", marginBottom: 8, textTransform: "uppercase" }}>{t.time}</label>
+                <input type="time" value={session.time} onChange={e => update({ ...session, time: e.target.value })} className="input" />
+              </div>
+            </div>
+            <div style={{ marginBottom: 14 }}>
+              <label style={{ display: "block", fontSize: "0.75rem", fontWeight: 600, color: "var(--text-secondary)", marginBottom: 8, textTransform: "uppercase" }}>{t.duration}</label>
+              <select value={session.duration} onChange={e => update({ ...session, duration: e.target.value })} className="input" style={{ width: "100%" }}>
+                <option value="15">15 minutes</option>
+                <option value="30">30 minutes</option>
+                <option value="45">45 minutes</option>
+                <option value="60">1 hour</option>
+                <option value="90">1.5 hours</option>
+                <option value="120">2 hours</option>
+              </select>
+            </div>
+            <div style={{ marginBottom: 14 }}>
+              <label style={{ display: "block", fontSize: "0.75rem", fontWeight: 600, color: "var(--text-secondary)", marginBottom: 8, textTransform: "uppercase" }}>{t.facilitator}</label>
+              <input value={session.facilitator} onChange={e => update({ ...session, facilitator: e.target.value })} placeholder={t.facilitatorPlaceholder} className="input" />
+            </div>
+            <div>
+              <label style={{ display: "block", fontSize: "0.75rem", fontWeight: 600, color: "var(--text-secondary)", marginBottom: 8, textTransform: "uppercase" }}>{t.attendees}</label>
+              <input value={session.attendees || ""} onChange={e => update({ ...session, attendees: e.target.value })} placeholder={t.attendeesPlaceholder} className="input" />
+            </div>
+          </div>
+        </div>
+      );
+    };
+
+    const AgendaPhase = ({ session, update }) => {
+      const { t } = useLang();
+      const [copied, setCopied] = useState(false);
+      const [showTip, setShowTip] = useState(false);
+      const updateTopic = (i, changes) => { const topics = [...session.topics]; topics[i] = { ...topics[i], ...changes }; update({ ...session, topics }); };
+      const addTopic = () => update({ ...session, topics: [...session.topics, { id: Date.now(), title: "", notes: "", commitments: [], timeEstimate: "" }] });
+      const removeTopic = (i) => { if (session.topics.length <= 1) return; update({ ...session, topics: session.topics.filter((_, j) => j !== i) }); };
+      const moveTopic = (i, dir) => { const j = i + dir; if (j < 0 || j >= session.topics.length) return; const topics = [...session.topics]; [topics[i], topics[j]] = [topics[j], topics[i]]; update({ ...session, topics }); };
+      const copyAgenda = async () => {
+        let s = `${session.title}\n${session.date} | ${session.time} to ${calcEndTime(session.time, session.duration)}\n`;
+        if (session.facilitator) s += `${t.facilitator}: ${session.facilitator}\n`;
+        if (session.attendees) s += `${t.attendees}: ${session.attendees}\n`;
+        if (session.intention) s += `\n${t.goal}: ${session.intention}\n`;
+        s += `\n${t.agenda.toUpperCase()}\n`;
+        session.topics.forEach((x, i) => { if (x.title.trim()) s += `${i + 1}. ${x.title}\n`; });
+        try { await navigator.clipboard.writeText(s); setCopied(true); setTimeout(() => setCopied(false), 2000); } catch {}
+      };
+
+      return (
+        <div className="animate-in" style={{ maxWidth: 560, margin: "0 auto", width: "100%" }}>
+          <div style={{ marginBottom: 18 }}>
+            <h2 className="font-serif" style={{ fontSize: "1.5rem", marginBottom: 6 }}>{session.title || t.untitledSession}</h2>
+            <p style={{ color: "var(--text-muted)", fontSize: "0.9375rem" }}>{session.date} · {session.time} to {calcEndTime(session.time, session.duration)}</p>
+          </div>
+          {session.intention && <div className="intention-banner" style={{ marginBottom: 18 }}><span style={{ color: "var(--blue-text)" }}>{Icon.target}</span><span style={{ fontSize: "0.9375rem", color: "var(--text-secondary)" }}><strong>{t.goal}:</strong> {session.intention}</span></div>}
+          
+          {showTip && <div style={{ marginBottom: 14 }}><TipBox text={t.tipAgenda} show={showTip} onToggle={() => setShowTip(false)} /></div>}
+          
+          <div className="card" style={{ padding: 20, marginBottom: 14, overflow: "hidden" }}>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 14, gap: 10, flexWrap: "wrap" }}>
+              <label style={{ fontSize: "0.75rem", fontWeight: 600, color: "var(--text-secondary)", textTransform: "uppercase" }}>{t.agenda}</label>
+              <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+                <TipBox text={t.tipAgenda} show={false} onToggle={() => setShowTip(!showTip)} />
+                <button onClick={copyAgenda} className="btn btn-ghost btn-small">{copied ? Icon.check : Icon.copy} {copied ? t.agendaCopied : t.copyAgenda}</button>
+              </div>
+            </div>
+            <div style={{ display: "flex", flexDirection: "column", gap: 10, marginBottom: 14 }}>
+              {session.topics.map((topic, i) => (
+                <div key={topic.id} className="topic-row">
+                  <div style={{ width: 26, height: 26, borderRadius: "50%", background: "var(--accent)", color: "white", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "0.75rem", fontWeight: 600, flexShrink: 0, marginTop: 2 }}>{i + 1}</div>
+                  <TopicInput value={topic.title} onChange={e => updateTopic(i, { title: e.target.value })} placeholder={t.topicPlaceholder} />
+                  <div className="reorder-btns desktop-only" style={{ display: "flex", gap: 2 }}>
+                    <button onClick={() => moveTopic(i, -1)} disabled={i === 0} className="btn btn-ghost btn-icon">{Icon.up}</button>
+                    <button onClick={() => moveTopic(i, 1)} disabled={i === session.topics.length - 1} className="btn btn-ghost btn-icon">{Icon.down}</button>
+                  </div>
+                  {session.topics.length > 1 && <button onClick={() => removeTopic(i)} className="btn btn-ghost btn-icon" style={{ opacity: 0.4, marginTop: 2 }}>{Icon.x}</button>}
+                </div>
+              ))}
+            </div>
+            <button onClick={addTopic} className="btn btn-ghost" style={{ width: "100%", justifyContent: "center" }}>{Icon.plus} {t.addTopic}</button>
+          </div>
+          
+          {/* Calendar button */}
+          <div className="card" style={{ padding: 18, display: "flex", alignItems: "center", justifyContent: "space-between", gap: 14, flexWrap: "wrap" }}>
+            <div style={{ minWidth: 0 }}>
+              <div style={{ fontWeight: 600, fontSize: "0.9375rem", marginBottom: 3 }}>{t.addToCalendar}</div>
+              <div style={{ fontSize: "0.8125rem", color: "var(--text-muted)" }}>{t.shareBeforeMeeting}</div>
+            </div>
+            <button onClick={() => downloadCalendar(session, t)} className="btn btn-secondary btn-small">{Icon.calendar} {t.addToCalendar}</button>
+          </div>
+        </div>
+      );
+    };
+
+    const RoomPhase = ({ session, update, goToReview, timerState, onTimerAction }) => {
+      const { t } = useLang();
+      const [showPause, setShowPause] = useState(false);
+      const [skipPause, setSkipPause] = useState(loadSkipPause);
+      const [activeLens, setActiveLens] = useState(null);
+      const [adding, setAdding] = useState(false);
+      const [draft, setDraft] = useState({ what: "", who: "", due: "" });
+      const [showAob, setShowAob] = useState(false);
+      const [aobDraft, setAobDraft] = useState("");
+      const [showTip, setShowTip] = useState(false);
+      const [showCommitmentTip, setShowCommitmentTip] = useState(false);
+      const notesRef = useRef();
+
+      const lenses = {
+        scope: { name: t.scope, color: "var(--blue)", bg: "var(--blue-soft)", textColor: "var(--blue-text)", question: t.scopeQuestion, description: t.scopeDesc, prompts: t.scopePrompts },
+        voices: { name: t.voices, color: "var(--purple)", bg: "var(--purple-soft)", textColor: "var(--purple-text)", question: t.voicesQuestion, description: t.voicesDesc, prompts: t.voicesPrompts },
+        context: { name: t.context, color: "var(--orange)", bg: "var(--orange-soft)", textColor: "var(--orange-text)", question: t.contextQuestion, description: t.contextDesc, prompts: t.contextPrompts },
+      };
+
+      const topic = session.topics[session.currentTopicIndex];
+      const isLast = session.currentTopicIndex === session.topics.length - 1;
+      const totalCommitments = session.topics.reduce((s, x) => s + (x.commitments?.length || 0), 0);
+      const progress = ((session.currentTopicIndex + 1) / session.topics.length) * 100;
+      
+      const totalDurationSecs = parseInt(session.duration) * 60;
+      const elapsedSecs = timerState.elapsed;
+      const remainingSecs = totalDurationSecs - elapsedSecs;
+      const isOvertime = remainingSecs < 0;
+
+      const updateTopic = (u) => { const topics = [...session.topics]; topics[session.currentTopicIndex] = { ...topic, ...u }; update({ ...session, topics }); };
+      const addPrompt = (text) => { updateTopic({ notes: (topic.notes || "") + (topic.notes ? "\n\n" : "") + "→ " + text + "\n" }); setActiveLens(null); setTimeout(() => notesRef.current?.focus(), 50); };
+      const saveCommitment = () => { if (!draft.what.trim()) return; updateTopic({ commitments: [...(topic.commitments || []), { id: Date.now(), what: draft.what.trim(), who: draft.who.trim() || t.theGroup, due: draft.due, done: false }] }); setDraft({ what: "", who: "", due: "" }); setAdding(false); };
+      const toggleCommitment = (id) => { updateTopic({ commitments: topic.commitments.map(c => c.id === id ? { ...c, done: !c.done } : c) }); };
+      
+      const handleNext = () => { if (skipPause) { goNext(); } else { setShowPause(true); } };
+      const goNext = () => { setShowPause(false); setActiveLens(null); if (isLast) goToReview(); else update({ ...session, currentTopicIndex: session.currentTopicIndex + 1 }); };
+      const goPrev = () => { if (session.currentTopicIndex > 0) { setActiveLens(null); update({ ...session, currentTopicIndex: session.currentTopicIndex - 1 }); } };
+      const addToAob = () => { if (!aobDraft.trim()) return; update({ ...session, aobTopics: [...(session.aobTopics || []), { id: Date.now(), title: aobDraft.trim() }] }); setAobDraft(""); };
+      const removeFromAob = (id) => update({ ...session, aobTopics: session.aobTopics.filter(p => p.id !== id) });
+      const restoreFromAob = (aob) => { update({ ...session, topics: [...session.topics, { id: Date.now(), title: aob.title, notes: "", commitments: [], timeEstimate: "" }], aobTopics: session.aobTopics.filter(p => p.id !== aob.id) }); };
+
+      const TimerDisplay = () => (
+        <div className="card" style={{ padding: 16 }}>
+          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 10 }}>
+            <div style={{ fontSize: "0.75rem", fontWeight: 600, color: "var(--text-muted)", textTransform: "uppercase", display: "flex", alignItems: "center", gap: 6 }}>
+              {Icon.clock} {isOvertime ? t.timeOver : t.timeRemaining}
+            </div>
+            {timerState.running && <span className="animate-pulse" style={{ width: 10, height: 10, borderRadius: "50%", background: isOvertime ? "var(--red)" : "var(--green)" }} />}
+          </div>
+          <div className={`timer-display ${isOvertime ? "timer-overtime" : ""}`} style={{ fontSize: "1.75rem", fontWeight: 500, marginBottom: 10 }}>
+            {isOvertime && "+"}{formatTime(remainingSecs)}
+          </div>
+          <button onClick={() => onTimerAction(timerState.running ? "pause" : "start")} className="btn" style={{ width: "100%", padding: "12px", fontSize: "0.9375rem", background: timerState.running ? "var(--orange-soft)" : "var(--accent)", color: timerState.running ? "var(--orange-text)" : "white", fontWeight: 600, borderRadius: 8 }}>
+            {timerState.running ? t.pauseTimer : t.startTimer}
+          </button>
+          {elapsedSecs > 0 && (
+            <div style={{ fontSize: "0.75rem", color: "var(--text-muted)", marginTop: 10, textAlign: "center" }}>
+              {t.totalTime}: {formatTime(elapsedSecs)}
+            </div>
+          )}
+        </div>
+      );
+
+      return (
+        <div className="room-layout" style={{ display: "grid", gridTemplateColumns: "220px 1fr", gap: 20, minHeight: "calc(100vh - 140px)", width: "100%" }}>
+          {showPause && <PauseModal onContinue={goNext} onBack={() => setShowPause(false)} isLast={isLast} onSkipChange={setSkipPause} />}
+          
+          {/* Mobile timer */}
+          <div className="mobile-only mobile-timer-section no-print">
+            <TimerDisplay />
+          </div>
+          
+          <aside className="no-print room-sidebar" style={{ display: "flex", flexDirection: "column", gap: 14, minWidth: 0 }}>
+            <div className="desktop-only">
+              <TimerDisplay />
+            </div>
+            
+            <div>
+              <div style={{ fontSize: "0.75rem", fontWeight: 600, color: "var(--text-muted)", marginBottom: 8, textTransform: "uppercase", padding: "0 4px" }}>{t.progress}</div>
+              <div className="progress-bar"><div className="progress-fill" style={{ width: progress + "%" }} /></div>
+              <div style={{ fontSize: "0.8125rem", color: "var(--text-muted)", marginTop: 6, padding: "0 4px" }}>{session.currentTopicIndex + 1} {t.of} {session.topics.length}</div>
+            </div>
+            <div style={{ flex: 1, overflow: "auto", minWidth: 0 }}>
+              <div style={{ fontSize: "0.75rem", fontWeight: 600, color: "var(--text-muted)", marginBottom: 10, textTransform: "uppercase", padding: "0 4px" }}>{t.agenda}</div>
+              <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+                {session.topics.map((x, i) => (
+                  <button key={x.id} onClick={() => { setActiveLens(null); update({ ...session, currentTopicIndex: i }); }} style={{ textAlign: "left", padding: 12, borderRadius: 10, border: i === session.currentTopicIndex ? "2px solid var(--accent)" : "1px solid transparent", background: i === session.currentTopicIndex ? "var(--bg-card)" : "transparent", cursor: "pointer", fontFamily: "inherit", minHeight: 48, width: "100%", display: "block" }}>
+                    <div style={{ display: "flex", justifyContent: "space-between", fontSize: "0.6875rem", color: "var(--text-muted)", marginBottom: 4 }}>
+                      <span>{String(i + 1).padStart(2, "0")}</span>
+                      {x.commitments?.length > 0 && <span style={{ color: "var(--green-text)", fontWeight: 600 }}>{x.commitments.length}✓</span>}
+                    </div>
+                    <div className="sidebar-topic-text" style={{ fontWeight: i === session.currentTopicIndex ? 600 : 400, color: i === session.currentTopicIndex ? "var(--text)" : "var(--text-secondary)" }}>{x.title || t.untitledTopic}</div>
+                  </button>
+                ))}
+              </div>
+            </div>
+            {totalCommitments > 0 && <button onClick={goToReview} className="btn btn-secondary btn-small" style={{ justifyContent: "center" }}><span style={{ width: 20, height: 20, borderRadius: "50%", background: "var(--green)", color: "white", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "0.6875rem", fontWeight: 700 }}>{totalCommitments}</span> {t.viewAll}</button>}
+            <button onClick={() => setShowAob(!showAob)} className="btn btn-ghost btn-small" style={{ justifyContent: "center", fontSize: "0.8125rem" }}>{t.aob} {session.aobTopics?.length > 0 && `(${session.aobTopics.length})`}</button>
+          </aside>
+
+          <main className="card room-main" style={{ padding: 24, display: "flex", flexDirection: "column", overflow: "hidden", minWidth: 0 }}>
+            {session.intention && <div className="intention-banner no-print" style={{ marginBottom: 16 }}><span style={{ color: "var(--blue-text)" }}>{Icon.target}</span><span style={{ fontSize: "1rem", color: "var(--text-secondary)" }}><strong>{t.goal}:</strong> {session.intention}</span></div>}
+            
+            {session.currentTopicIndex === 0 && (
+              <div className="no-print" style={{ marginBottom: 16 }}><TipBox text={t.tipRoomStart} show={showTip} onToggle={() => setShowTip(!showTip)} /></div>
+            )}
+            
+            <div className="animate-in" style={{ marginBottom: 16 }}>
+              <div style={{ fontSize: "0.75rem", fontWeight: 600, color: "var(--text-muted)", marginBottom: 6, textTransform: "uppercase" }}>{t.topic} {session.currentTopicIndex + 1} {t.of} {session.topics.length}</div>
+              <h1 className="font-serif" style={{ fontSize: "clamp(1.625rem, 5vw, 2.25rem)", lineHeight: 1.2 }}>{topic.title || t.untitledTopic}</h1>
+            </div>
+            <div style={{ flex: 1, marginBottom: 16, minHeight: 100, background: "var(--bg-secondary)", borderRadius: "var(--radius)", padding: 4 }}>
+              <AutoTextarea ref={notesRef} value={topic.notes || ""} onChange={e => updateTopic({ notes: e.target.value })} placeholder={t.notesPlaceholder} style={{ fontSize: "1.0625rem", lineHeight: 1.6, minHeight: 100, padding: 16 }} />
+            </div>
+            {showAob && (
+              <div className="aob-box animate-scale no-print" style={{ marginBottom: 16 }}>
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 10 }}>
+                  <div>
+                    <span style={{ fontWeight: 600, color: "var(--purple-text)", fontSize: "1rem" }}>{t.aob}</span>
+                    <p style={{ fontSize: "0.8125rem", color: "var(--text-muted)", marginTop: 3 }}>{t.aobDesc}</p>
+                  </div>
+                  <button onClick={() => setShowAob(false)} className="btn btn-ghost btn-icon">{Icon.x}</button>
+                </div>
+                <div style={{ display: "flex", gap: 8, marginBottom: 10 }}>
+                  <input value={aobDraft} onChange={e => setAobDraft(e.target.value)} placeholder={t.aobPlaceholder} className="input input-small" style={{ flex: 1 }} onKeyDown={e => e.key === "Enter" && addToAob()} />
+                  <button onClick={addToAob} disabled={!aobDraft.trim()} className="btn btn-secondary btn-small">{Icon.plus}</button>
+                </div>
+                {session.aobTopics?.length > 0 ? (
+                  <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+                    {session.aobTopics.map(p => (
+                      <div key={p.id} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "10px 12px", background: "var(--bg-card)", borderRadius: 8, fontSize: "0.9375rem", gap: 10, minHeight: 48 }}>
+                        <span style={{ flex: 1, minWidth: 0 }}>{p.title}</span>
+                        <div style={{ display: "flex", gap: 6 }}>
+                          <button onClick={() => restoreFromAob(p)} className="btn btn-ghost btn-small">{t.addToAgenda}</button>
+                          <button onClick={() => removeFromAob(p.id)} className="btn btn-ghost btn-icon" style={{ opacity: 0.5 }}>{Icon.x}</button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                ) : <p style={{ textAlign: "center", color: "var(--text-muted)", fontSize: "0.8125rem", padding: 10 }}>{t.noAob}</p>}
+              </div>
+            )}
+            <div className="no-print" style={{ marginBottom: 16 }}>
+              <div style={{ fontSize: "0.8125rem", color: "var(--text-muted)", marginBottom: 8 }}>{t.needToSurface}</div>
+              <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+                {Object.entries(lenses).map(([k, v]) => <button key={k} onClick={() => setActiveLens(activeLens === k ? null : k)} className="btn btn-small" style={{ background: activeLens === k ? v.color : v.bg, color: activeLens === k ? "white" : v.textColor, fontWeight: 600 }}>{v.name}</button>)}
+              </div>
+              {activeLens && (
+                <div className="animate-scale" style={{ marginTop: 12, padding: 14, background: lenses[activeLens].bg, borderRadius: "var(--radius)", borderLeft: "3px solid " + lenses[activeLens].color }}>
+                  <div style={{ fontWeight: 600, marginBottom: 4, color: lenses[activeLens].textColor, fontSize: "1rem" }}>{lenses[activeLens].question}</div>
+                  <div style={{ fontSize: "0.8125rem", color: "var(--text-secondary)", marginBottom: 10 }}>{lenses[activeLens].description}</div>
+                  <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>{lenses[activeLens].prompts.map((p, i) => <button key={i} onClick={() => addPrompt(p)} className="btn btn-secondary btn-small" style={{ background: "var(--bg-card)", fontSize: "0.8125rem" }}>{p}</button>)}</div>
+                </div>
+              )}
+            </div>
+            <div style={{ borderTop: "1px solid var(--border-light)", paddingTop: 16 }}>
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 12, gap: 10 }}>
+                <span style={{ fontWeight: 600, fontSize: "1rem" }}>{t.whatWeAgreed}</span>
+                <div style={{ display: "flex", gap: 8 }}>
+                  {!adding && <TipBox text={t.tipCommitment} show={false} onToggle={() => setShowCommitmentTip(!showCommitmentTip)} />}
+                  {!adding && <button onClick={() => setAdding(true)} className="btn btn-primary btn-small">{Icon.plus} {t.captureCommitment}</button>}
+                </div>
+              </div>
+              {showCommitmentTip && !adding && <div style={{ marginBottom: 12 }}><TipBox text={t.tipCommitment} show={true} onToggle={() => setShowCommitmentTip(false)} /></div>}
+              {adding && (
+                <div className="animate-scale" style={{ padding: 14, background: "var(--bg-secondary)", borderRadius: "var(--radius)", marginBottom: 12 }}>
+                  <input value={draft.what} onChange={e => setDraft({ ...draft, what: e.target.value })} placeholder={t.commitmentWhatPlaceholder} className="input" style={{ marginBottom: 10 }} autoFocus onKeyDown={e => e.key === "Enter" && draft.what.trim() && saveCommitment()} />
+                  <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10, marginBottom: 12 }} className="mobile-grid-1">
+                    <input value={draft.who} onChange={e => setDraft({ ...draft, who: e.target.value })} placeholder={t.commitmentWhoPlaceholder} className="input input-small" />
+                    <input type="date" value={draft.due} onChange={e => setDraft({ ...draft, due: e.target.value })} className="input input-small" />
+                  </div>
+                  <div style={{ display: "flex", gap: 8 }}>
+                    <button onClick={saveCommitment} disabled={!draft.what.trim()} className="btn btn-primary btn-small">{Icon.check} {t.save}</button>
+                    <button onClick={() => { setAdding(false); setDraft({ what: "", who: "", due: "" }); }} className="btn btn-ghost btn-small">{t.cancel}</button>
+                  </div>
+                </div>
+              )}
+              {topic.commitments?.length > 0 ? (
+                <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+                  {topic.commitments.map(c => (
+                    <div key={c.id} style={{ padding: 14, background: c.done ? "var(--bg-secondary)" : "var(--green-soft)", borderRadius: 10, borderLeft: `3px solid ${c.done ? "var(--border)" : "var(--green)"}`, display: "flex", alignItems: "start", gap: 12, opacity: c.done ? 0.7 : 1 }}>
+                      <Checkbox checked={c.done} onChange={() => toggleCommitment(c.id)} />
+                      <div style={{ flex: 1, minWidth: 0 }}>
+                        <div style={{ fontWeight: 500, textDecoration: c.done ? "line-through" : "none", fontSize: "1rem" }}>{c.what}</div>
+                        <div style={{ fontSize: "0.8125rem", color: "var(--text-muted)", marginTop: 4, display: "flex", flexWrap: "wrap", gap: 10 }}>
+                          <span>{c.who}</span>
+                          {c.due && <span style={{ display: "flex", alignItems: "center", gap: 4 }}>{Icon.calendar} {c.due}</span>}
+                        </div>
+                      </div>
+                      <button onClick={() => updateTopic({ commitments: topic.commitments.filter(x => x.id !== c.id) })} className="btn btn-ghost btn-icon" style={{ opacity: 0.4 }}>{Icon.x}</button>
+                    </div>
+                  ))}
+                </div>
+              ) : <p style={{ textAlign: "center", padding: 16, color: "var(--text-muted)", fontSize: "0.9375rem" }}>{t.noCommitmentsYet}</p>}
+            </div>
+            <div className="no-print" style={{ display: "flex", justifyContent: "space-between", marginTop: 16, paddingTop: 16, borderTop: "1px solid var(--border-light)", gap: 14 }}>
+              <button onClick={goPrev} disabled={session.currentTopicIndex === 0} className="btn btn-ghost">{Icon.back} {t.previous}</button>
+              <button onClick={handleNext} className="btn btn-primary">{isLast ? t.finish : t.nextTopic} {Icon.arrow}</button>
+            </div>
+          </main>
+        </div>
+      );
+    };
+
+    const ReviewPhase = ({ session, update, onSave, timerState }) => {
+      const { t } = useLang();
+      const [copied, setCopied] = useState(false);
+      const [filter, setFilter] = useState("all");
+      const allCommitments = session.topics.flatMap(x => (x.commitments || []).map(c => ({ ...c, topic: x.title, topicId: x.id })));
+      const filtered = filter === "all" ? allCommitments : filter === "done" ? allCommitments.filter(c => c.done) : allCommitments.filter(c => !c.done);
+      const doneCount = allCommitments.filter(c => c.done).length;
+
+      const toggleCommitment = (topicId, commitmentId) => {
+        const topics = session.topics.map(topic => topic.id === topicId ? { ...topic, commitments: topic.commitments.map(c => c.id === commitmentId ? { ...c, done: !c.done } : c) } : topic);
+        update({ ...session, topics });
+      };
+
+      const copyText = async () => {
+        let s = `${t.exportTitle.toUpperCase()}\n\n`;
+        s += `${session.title}\n${session.date} | ${session.time} to ${calcEndTime(session.time, session.duration)}\n`;
+        if (session.facilitator) s += `${t.facilitator}: ${session.facilitator}\n`;
+        if (session.attendees) s += `${t.attendees}: ${session.attendees}\n`;
+        if (session.intention) s += `\n${t.goal}: ${session.intention}\n`;
+        s += `\n${t.totalTime}: ${formatTime(timerState.elapsed)}\n`;
+        s += `\n${t.commitments.toUpperCase()}\n\n`;
+        if (!allCommitments.length) s += `${t.noCommitmentsCaptured}\n`;
+        else allCommitments.forEach(c => { s += `${c.done ? "☑" : "☐"} ${c.what}\n   ${c.who}${c.due ? ` | ${t.dueDate}: ${c.due}` : ""}\n   (${c.topic})\n\n`; });
+        if (session.aobTopics?.length > 0) { s += `\n${t.aob.toUpperCase()}\n\n`; session.aobTopics.forEach(p => { s += `• ${p.title}\n`; }); }
+        s += `\n\n${t.exportFacilitatedWith}`;
+        try { await navigator.clipboard.writeText(s); setCopied(true); setTimeout(() => setCopied(false), 2000); } catch {}
+      };
+
+      return (
+        <div className="animate-in" style={{ maxWidth: 600, margin: "0 auto", width: "100%" }}>
+          <div style={{ textAlign: "center", marginBottom: 28 }}>
+            <div style={{ width: 48, height: 48, borderRadius: 12, background: "var(--accent)", color: "white", display: "flex", alignItems: "center", justifyContent: "center", margin: "0 auto 14px", fontSize: "1.125rem" }}>◐</div>
+            <h1 className="font-serif" style={{ fontSize: "1.5rem", marginBottom: 6 }}>{session.title}</h1>
+            <p style={{ color: "var(--text-muted)", fontSize: "0.9375rem" }}>{session.date} · {session.time} to {calcEndTime(session.time, session.duration)}</p>
+            {session.attendees && <p style={{ marginTop: 8, color: "var(--text-secondary)", fontSize: "0.875rem", display: "flex", alignItems: "center", justifyContent: "center", gap: 8 }}>{Icon.users} {session.attendees}</p>}
+            {session.intention && <p style={{ marginTop: 10, color: "var(--text-secondary)", fontSize: "1rem", maxWidth: 440, margin: "10px auto 0" }}>{session.intention}</p>}
+            <p style={{ marginTop: 12, fontSize: "0.9375rem", color: "var(--text-muted)" }}>{t.totalTime}: <strong>{formatTime(timerState.elapsed)}</strong></p>
+          </div>
+          <div className="no-print" style={{ display: "flex", justifyContent: "center", gap: 8, marginBottom: 20, flexWrap: "wrap" }}>
+            <button onClick={copyText} className="btn btn-secondary btn-small">{copied ? Icon.check : Icon.copy} {copied ? t.copied : t.copy}</button>
+            <button onClick={() => window.print()} className="btn btn-secondary btn-small">{Icon.print} {t.print}</button>
+            <button onClick={() => exportSession(session, t)} className="btn btn-secondary btn-small">{Icon.download} {t.exportSession}</button>
+            <button onClick={onSave} className="btn btn-secondary btn-small">{Icon.check} {t.save}</button>
+          </div>
+          <div style={{ marginBottom: 28 }}>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 14, flexWrap: "wrap", gap: 10 }}>
+              <h2 style={{ fontWeight: 600, fontSize: "1.0625rem" }}>{t.ourCommitments} <span style={{ color: "var(--text-muted)", fontWeight: 400 }}>({doneCount}/{allCommitments.length})</span></h2>
+              <div className="no-print" style={{ display: "flex", gap: 6 }}>
+                {[["all", t.allCommitments], ["pending", t.pending], ["done", t.completed]].map(([val, label]) => (
+                  <button key={val} onClick={() => setFilter(val)} className="btn btn-small" style={{ background: filter === val ? "var(--accent)" : "var(--bg-secondary)", color: filter === val ? "white" : "var(--text-muted)" }}>{label}</button>
+                ))}
+              </div>
+            </div>
+            {!filtered.length ? (
+              <div className="card" style={{ padding: 24, textAlign: "center" }}>
+                <p style={{ color: "var(--text-muted)", fontSize: "1rem" }}>{filter === "all" ? t.noCommitmentsCaptured : `No ${filter} commitments`}</p>
+                {filter === "all" && <button onClick={() => update({ ...session, phase: "room" })} className="btn btn-secondary" style={{ marginTop: 14 }}>{t.goBackAndAdd}</button>}
+              </div>
+            ) : (
+              <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+                {filtered.map(c => (
+                  <div key={c.id} className="card" style={{ padding: 16, display: "flex", alignItems: "start", gap: 14, opacity: c.done ? 0.7 : 1 }}>
+                    <Checkbox checked={c.done} onChange={() => toggleCommitment(c.topicId, c.id)} />
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      <div style={{ fontWeight: 500, marginBottom: 6, textDecoration: c.done ? "line-through" : "none", fontSize: "1.0625rem" }}>{c.what}</div>
+                      <div style={{ fontSize: "0.8125rem", color: "var(--text-muted)", display: "flex", flexWrap: "wrap", gap: 10 }}>
+                        <span>{c.who}</span>
+                        {c.due && <span style={{ display: "flex", alignItems: "center", gap: 5 }}>{Icon.calendar} {c.due}</span>}
+                        <span>({c.topic})</span>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+          {session.aobTopics?.length > 0 && (
+            <div style={{ marginBottom: 28 }}>
+              <h3 style={{ fontWeight: 600, marginBottom: 12, fontSize: "1rem" }}>{t.aob}</h3>
+              <div className="aob-box">{session.aobTopics.map(p => (<div key={p.id} style={{ padding: "10px 0", borderBottom: "1px solid var(--purple)", fontSize: "1rem" }}>{p.title}</div>))}</div>
+            </div>
+          )}
+          {session.topics.some(x => x.notes?.trim()) && (
+            <div className="print-break" style={{ borderTop: "1px solid var(--border-light)", paddingTop: 20 }}>
+              <h3 style={{ fontWeight: 600, marginBottom: 14, fontSize: "1rem" }}>{t.discussionNotes}</h3>
+              <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
+                {session.topics.filter(x => x.notes?.trim()).map(x => (
+                  <div key={x.id}>
+                    <div style={{ fontWeight: 600, marginBottom: 6, fontSize: "1rem" }}>{x.title}</div>
+                    <div style={{ color: "var(--text-secondary)", whiteSpace: "pre-wrap", lineHeight: 1.6, fontSize: "0.9375rem" }}>{x.notes}</div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+          <div style={{ marginTop: 28, paddingTop: 14, borderTop: "1px solid var(--border-light)", textAlign: "center", color: "var(--text-muted)", fontSize: "0.8125rem" }}>{t.agreedInTheRoom}</div>
+          <div className="no-print" style={{ textAlign: "center", marginTop: 20 }}>
+            <button onClick={() => update({ ...session, phase: "home" })} className="btn btn-ghost">{Icon.back} {t.backToHome}</button>
+            <span style={{ margin: "0 10px", color: "var(--text-muted)" }}>·</span>
+            <button onClick={() => { if (confirm(t.confirmStartOver)) { save(null); update(null); } }} className="btn btn-ghost">{Icon.refresh} {t.newSession}</button>
+          </div>
+        </div>
+      );
+    };
+
+    // =============================================
+    // MAIN APP
+    // =============================================
+    const App = () => {
+      const [session, setSession] = useState(() => load() || null);
+      const [showHelp, setShowHelp] = useState(false);
+      const [showSaved, setShowSaved] = useState(false);
+      const [lang, setLangState] = useState(loadLang);
+      const [timerState, setTimerState] = useState({ running: false, elapsed: 0, startedAt: null });
+
+      const setLang = (l) => { setLangState(l); saveLang(l); };
+      const t = translations[lang];
+
+      const update = useCallback((s) => { setSession(s); if (s) save(s); }, []);
+      const setPhase = (p) => update({ ...session, phase: p });
+      const canEnterRoom = session?.title?.trim() && session?.topics?.some(x => x.title?.trim());
+
+      useEffect(() => {
+        if (!timerState.running) return;
+        const i = setInterval(() => { setTimerState(prev => ({ ...prev, elapsed: prev.elapsed + 1 })); }, 1000);
+        return () => clearInterval(i);
+      }, [timerState.running]);
+
+      const handleTimerAction = (action) => {
+        if (action === "start") setTimerState(prev => ({ ...prev, running: true, startedAt: Date.now() }));
+        else if (action === "pause") setTimerState(prev => ({ ...prev, running: false }));
+      };
+
+      useEffect(() => {
+        const handleKey = (e) => {
+          if (e.target.tagName === "INPUT" || e.target.tagName === "TEXTAREA") return;
+          if (session?.phase === "room") {
+            if (e.key === "ArrowRight" || e.key === "n") { if (session.currentTopicIndex < session.topics.length - 1) update({ ...session, currentTopicIndex: session.currentTopicIndex + 1 }); }
+            if (e.key === "ArrowLeft" || e.key === "p") { if (session.currentTopicIndex > 0) update({ ...session, currentTopicIndex: session.currentTopicIndex - 1 }); }
+            if (e.key === "t") handleTimerAction(timerState.running ? "pause" : "start");
+          }
+          if ((e.metaKey || e.ctrlKey) && e.key === "s") { e.preventDefault(); if (session) { addToHistory(session); setShowSaved(true); setTimeout(() => setShowSaved(false), 1500); } }
+        };
+        window.addEventListener("keydown", handleKey);
+        return () => window.removeEventListener("keydown", handleKey);
+      }, [session, update, timerState.running]);
+
+      const handleSave = () => { if (session) { addToHistory(session); setShowSaved(true); setTimeout(() => setShowSaved(false), 1500); } };
+      const startFromTemplate = (template) => { update(createSession(template, lang)); setTimerState({ running: false, elapsed: 0, startedAt: null }); };
+      const openSession = (s) => update({ ...s, phase: s.phase === "home" ? "review" : s.phase });
+      const importSession = (s) => update({ ...s, phase: "review", id: Date.now().toString(36) });
+      const continueSession = () => { if (session && session.phase !== "home") setPhase(session.phase); else setPhase("setup"); };
+
+      if (!session || session.phase === "home") {
+        return (
+          <LangContext.Provider value={{ t, lang, setLang }}>
+            <LandingPage currentSession={session} onStart={startFromTemplate} onContinue={continueSession} onOpenSession={openSession} onImport={importSession} />
+          </LangContext.Provider>
+        );
+      }
+
+      return (
+        <LangContext.Provider value={{ t, lang, setLang }}>
+          <SaveIndicator show={showSaved} />
+          {showHelp && <HelpModal onClose={() => setShowHelp(false)} />}
+          <div style={{ minHeight: "100vh", display: "flex", flexDirection: "column", overflow: "hidden", width: "100%" }}>
+            <header className="no-print" style={{ padding: "12px 18px", borderBottom: "1px solid var(--border-light)", background: "var(--bg-card)", width: "100%" }}>
+              <div style={{ maxWidth: 1100, margin: "0 auto", display: "flex", alignItems: "center", justifyContent: "space-between", gap: 14 }}>
+                <div style={{ display: "flex", alignItems: "center", gap: 10, flexShrink: 0 }}>
+                  <button onClick={() => setPhase("home")} style={{ width: 36, height: 36, borderRadius: 9, background: "var(--accent)", color: "white", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "1rem", border: "none", cursor: "pointer" }}>◐</button>
+                  <span className="desktop-only" style={{ fontWeight: 600, fontSize: "1rem" }}>{t.appName}</span>
+                </div>
+                <PhaseNav phase={session.phase} setPhase={setPhase} canEnterRoom={canEnterRoom} />
+                <MobileNav phase={session.phase} setPhase={setPhase} canEnterRoom={canEnterRoom} />
+                <div style={{ display: "flex", alignItems: "center", gap: 8, flexShrink: 0 }}>
+                  <LangToggle lang={lang} setLang={setLang} />
+                  <button onClick={() => setShowHelp(true)} className="btn btn-ghost btn-icon" title={t.howThisWorks}>{Icon.help}</button>
+                  <button onClick={() => { if (confirm(t.startOver)) { save(null); update(null); } }} className="btn btn-ghost btn-icon" title={t.newSession}>{Icon.refresh}</button>
+                </div>
+              </div>
+            </header>
+            <main style={{ flex: 1, padding: "20px 18px", overflowX: "hidden", width: "100%" }} className="mobile-p-sm">
+              <div style={{ maxWidth: 1100, margin: "0 auto", width: "100%" }}>
+                {session.phase === "setup" && <SetupPhase session={session} update={update} />}
+                {session.phase === "agenda" && <AgendaPhase session={session} update={update} />}
+                {session.phase === "room" && <RoomPhase session={session} update={update} goToReview={() => setPhase("review")} timerState={timerState} onTimerAction={handleTimerAction} />}
+                {session.phase === "review" && <ReviewPhase session={session} update={update} onSave={handleSave} timerState={timerState} />}
+              </div>
+            </main>
+            {(session.phase === "setup" || session.phase === "agenda") && (
+              <footer className="no-print" style={{ padding: "14px 18px", borderTop: "1px solid var(--border-light)", background: "var(--bg-card)" }}>
+                <div style={{ maxWidth: 560, margin: "0 auto", display: "flex", justifyContent: "space-between" }}>
+                  {session.phase === "agenda" ? (
+                    <>
+                      <button onClick={() => setPhase("setup")} className="btn btn-ghost">{Icon.back}</button>
+                      <button onClick={() => setPhase("room")} disabled={!canEnterRoom} className="btn btn-primary">{t.enterTheRoom} {Icon.arrow}</button>
+                    </>
+                  ) : (
+                    <>
+                      <div />
+                      <button onClick={() => setPhase("agenda")} className="btn btn-primary">{t.buildAgenda} {Icon.arrow}</button>
+                    </>
+                  )}
+                </div>
+              </footer>
+            )}
+          </div>
+        </LangContext.Provider>
+      );
+    };
+
+    ReactDOM.createRoot(document.getElementById("root")).render(<App />);
+  </script>
+</body>
+</html>
